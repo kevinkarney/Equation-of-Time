@@ -45,6 +45,17 @@
 from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 
 # ---------------------------------------------------------------------------------------
+# What is Wanted 
+# ---------------------------------------------------------------------------------------
+Required     = 0        # 0 = Sun - returns EoT, long corr EoT, RA & Decl, Azimuth & Altitude; 
+                        # 1 = Fourier ; 
+                        # 2 = Analemma calculations
+Year_Calc    = True     # if True, provides values for a whole year
+                        # if False, provides a single set of calculations
+Detail_Print = False    # Prints detailed calculation steps for day calculation
+rounder      = 5        # rounds output to these number of decimals
+
+# ---------------------------------------------------------------------------------------
 # Input 
 # ---------------------------------------------------------------------------------------
 Place        = 'Athens'
@@ -57,10 +68,6 @@ Month        = 2
 Day          = 13
 Hour         = 12
 DST          = 0
-Detail_Print = False    # Prints detailed calculation steps for day calculation
-rounder      = 5        # rounds output to these number of decimals
-Year_Calc    = True     # if True, provides values for a whole year
-Required     = 0        # 0 = Sun; 1 = Fourier; 2 = Analemma.
 
 #========================================================================================
 # FOLLOWING INPUT IS ONLY REQUIRED IF YOU WANT THE OUTPUT OF AN ANALEMMA
