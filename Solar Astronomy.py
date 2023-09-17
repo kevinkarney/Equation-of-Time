@@ -26,7 +26,7 @@
 #                 using subroutine Shadow 
 #     Declination_Lines - calculates declination lines coordinates
 #                         using subroutine Shadow 
-#     Shadow - calculates the coordinates of the nodus’ shadow on any time & date
+#     Shadow - calculates the coordinates of the nodus' shadow on any time & date
 #              using subroutine Sun
 #     Five Output Print subroutines
 # -----------------------------------------------------
@@ -47,7 +47,7 @@ from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 # ---------------------------------------------------------------------------------------
 # Input 
 # ---------------------------------------------------------------------------------------
-Place        = “Athens”
+Place        = 'Athens'
 Longitude    = 23.71667 # Degrees : +ve East of Greenwich
 Latitude     = 37.9666  # Degrees : +ve East of Greenwich
 Zone         = 2        # Hrs     : +ve East of Greenwich
@@ -60,7 +60,7 @@ DST          = 0
 Detail_Print = False    # Prints detailed calculation steps for day calculation
 rounder      = 5        # rounds output to these number of decimals
 Year_Calc    = True     # if True, provides values for a whole year
-Required     = 2        # 0 = Sun; 1 = Fourier; 2 = Analemma.
+Required     = 0        # 0 = Sun; 1 = Fourier; 2 = Analemma.
 
 #========================================================================================
 # FOLLOWING INPUT IS ONLY REQUIRED IF YOU WANT THE OUTPUT OF AN ANALEMMA
@@ -110,9 +110,9 @@ P                 = sin(L) * cos(Z) - cos(L) * sin(Z)  * cos(D)
 X0                = Nodus_Height * cos(L) * sin(D) / P
 Y0                = Nodus_Height * (sin(L) * sin(Z) + cos(L) * cos(Z) * cos(D)) / P
 # -----------------------------------------------------
-# Note Output File Folder & File will be specific to user’s operating system
+# Note Output File Folder & File will be specific to user's operating system
 # You may have to set sepecific permissions to write to file
-Filename = ‘/Users/kevinkarney/Desktop/Annalemma.txt’
+Filename = '/Users/kevinkarney/Desktop/Annalemma.txt'
 
 #========================================================================================
 def Calculate():
@@ -122,23 +122,23 @@ def Calculate():
     # ACCESS TO SUN ROUTINE
     if Required == 0:
         if Year_Calc == True:
-            print (“Year Result from Sun routine”)
+            print ('Year Result from Sun routine')
             Year_Output(Year,Longitude,Zone)
         else:    
-            print (“Results from Sun routine”)
+            print ('Results from Sun routine')
             Results = Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone,DST)
-            print (“EoT                     = “,EoT_Dec_MMSS(Results[0]))
-            print (“EoT Longitude Corrected = “,EoT_Dec_MMSS(Results[1]))
+            print ('EoT                     = ',EoT_Dec_MMSS(Results[0]))
+            print ('EoT Longitude Corrected = ',EoT_Dec_MMSS(Results[1]))
     # ACCESS TO FOURIER ROUTINE
     elif Required == 1:
         if Year_Calc == True:
-            print (“Year Results from Fourier routines”)
+            print ('Year Results from Fourier routines')
             Year_Output_Fourier(Year,Longitude,Zone)
         else:
-            print (“Results from EoT_Fourier & Decl_Fourier routines”)
+            print ('Results from EoT_Fourier & Decl_Fourier routines')
             Results = EoT_Fourier(Year, Month, Day, Longitude, Zone)
-            print (“EoT                     = “,EoT_Dec_MMSS(Results[0]))
-            print (“EoT Longitude Corrected = “,EoT_Dec_MMSS(Results[1]))
+            print ('EoT                     = ',EoT_Dec_MMSS(Results[0]))
+            print ('EoT Longitude Corrected = ',EoT_Dec_MMSS(Results[1]))
     # ACCESS TO ANALEMMA ROUTINE
     elif Required == 2:
         Calculate_Analemma()
@@ -220,98 +220,98 @@ def Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone,DST):
     SRA_deg             = 180 - r_deg
     SSA_deg             = 180 + r_deg
     if Detail_Print:
-        print (‘---------------------’)
-        print (‘Routine Sun - input’)
-        print (‘---------------------’)
-        print (“Place                = “,Place)
-        print (“Longitude            = “,Longitude)
-        print (“Latitude             = “,Latitude)
-        print (“Zone                 = “,Zone)
-        print (“DST                  = “,DST)
-        print (“Year                 = “,Year)
+        print ('---------------------')
+        print ('Routine Sun - input')
+        print ('---------------------')
+        print ('Place                = ',Place)
+        print ('Longitude            = ',Longitude)
+        print ('Latitude             = ',Latitude)
+        print ('Zone                 = ',Zone)
+        print ('DST                  = ',DST)
+        print ('Year                 = ',Year)
         if Month > 12:
             Year  +=1
             Month -= 12
-        print (“Month                = “,Month)
-        print (“Day                  = “,Day)
-        print (“Civil Time           = “,Hour)
-        print (“--------------”)
-        print (“Time Related Parameters”)
-        print (“--------------”)
-        print (“UTC_Hrs               = “,UTC_hrs)
-        print (“A                     = “,int(A))
-        print (“B                     = “,int(B))
-        print (“JD                    = “,round(JD,rounder))
-        print (“D0                    = “,round(D0,rounder))
-        print (“T                     = “,round(T,rounder))
-        print (“GMST_hrs              = “,round(GMST_hrs,rounder))
-        print (“Mean_Longitude_hrs    = “,round(Mean_Longitude_hrs,rounder))
-        print (“Mean_Longitude_deg    = “,round(Mean_Longitude_deg,rounder))
-        print (“--------------”)
-        print (“Astronomical Fact”)
-        print (“--------------”)
-        print (“Perihelion_deg        = “,round(Perihelion_deg,rounder))
-        print (“Eccentricity          = “,round(Eccentricity,rounder))
-        print (“Obliquity_deg         = “,round(Obliquity_deg,rounder))
-        print (“Obliquity_rad         = “,round(Obliquity_rad,rounder))
-        print (“--------------”)
-        print (“Solving Kepler”)
-        print (“--------------”)
-        print (“Mean_Anomaly_deg      = “,round(Mean_Longitude_hrs,rounder))
-        print (“Mean Anomaly rad      = “,round(Mean_Anomaly_rad,rounder))
-        print (“Eccent Anomaly Iter 1 = “,round(E1,rounder))
-        print (“Eccent Anomaly Iter 2 = “,round(E2,rounder))
-        print (“True_Anomaly_rad      = “,round(True_Anomaly_rad,rounder))
-        print (“True_Anomaly_deg      = “,round(True_Anomaly_deg,rounder))
-        print (“True_Longitude_deg    = “,round(True_Long_deg,rounder))
-        print (“True_Longitude_rad    = “,round(True_Long_rad,rounder))
-        print (“Eccent_Efft_deg       = “,round(Eccent_Effect_deg,rounder))
-        print (“Eccent_Efft_min       = “,round(Eccent_Effect_min,rounder))
-        print (“                      = “,EoT_Dec_MMSS(Eccent_Effect_min))
-        print (“--------------”)
-        print (“Right Ascension, Declination and EoT”)
-        print (“--------------”)
-        print (“Right_Ascension_rad   = “,round(Right_Ascension_rad,rounder))
-        print (“Right_Ascension_deg   = “,round(Right_Ascension_deg,rounder))
-        print (“                      = “,Dec_Deg_DMS(Right_Ascension_deg))
-        print (“Right_Ascension_hrs   = “,round(Right_Ascension_hrs,rounder))
-        print (“                      = “,Dec_Hrs_HMS(Right_Ascension_hrs))
-        print (“Declination_rad       = “,round(Declination_rad,rounder))
-        print (“Declination_deg       = “,round(Declination_deg,rounder))
-        print (“                      = “,Dec_Deg_DMS(Declination_deg))
-        print (“--------------”)
-        print (“EoT_deg               = “,round(EoT_deg,rounder))
-        print (“EoT_min               = “,round(EoT_min,rounder))
-        print (“                      = “,EoT_Dec_MMSS(EoT_min))
-        print (“Obliq_Effect_min      = “,round(Obliq_Effect_min,rounder))
-        print (“                      = “,EoT_Dec_MMSS(Obliq_Effect_min))
-        print (‘---------------------’)
-        print (“Long_Corr             = “,round(Long_Corr,rounder))
-        print (“                      = “,EoT_Dec_MMSS(Long_Corr))
-        print (“EoT_Corr_min          = “,round(EoT_Corr_min,rounder))
-        print (“                      = “,EoT_Dec_MMSS(EoT_Corr_min))
-        print (‘---------------------’)
-        print (“Solar_Noon_hrs        = “,round(Solar_Noon_hrs,rounder))
-        print (“                      = “,Dec_Hrs_HMS(Solar_Noon_hrs))
-        print (“Hour_Angle_hrs        = “,round(Hour_Angle_hrs,rounder))
-        print (“Hour_Angle_rad        = “,round(Hour_Angle_rad,rounder))
-        print (“Latitude_rad          = “,round(Latitude_rad,rounder))
-        print (“Altitude_rad          = “,round(Altitude_rad,rounder))
-        print (“Altitude_deg          = “,round(Altitude_deg,rounder))
-        print (“                      = “,Dec_Deg_DMS(Altitude_deg))
-        print (“a                     = “,round(a,rounder))
-        print (“b                     = “,round(b,rounder))
-        print (“Azimuth_rad           = “,round(Azimuth_rad,rounder))
-        print (“Azimuth_deg           = “,round(Azimuth_deg,rounder))
-        print (“                      = “,Dec_Deg_DMS(Azimuth_deg))
-        print (“q_hrs                 = “,round(q_hrs,rounder))
-        print (“SR_hrs                = “,round(SR_hrs,rounder))
-        print (“                      = “,Dec_Hrs_HMS(SR_hrs))
-        print (“SS_hrs                = “,round(SS_hrs,rounder))
-        print (“                      = “,Dec_Hrs_HMS(SS_hrs))
-        print (“r_deg                 = “,round(r_deg,rounder))
-        print (“SRA_deg               = “,round(SRA_deg,rounder))
-        print (“SSA_deg               = “,round(SSA_deg,rounder))
+        print ('Month                = ',Month)
+        print ('Day                  = ',Day)
+        print ('Civil Time           = ',Hour)
+        print ('--------------')
+        print ('Time Related Parameters')
+        print ('--------------')
+        print ('UTC_Hrs               = ',UTC_hrs)
+        print ('A                     = ',int(A))
+        print ('B                     = ',int(B))
+        print ('JD                    = ',round(JD,rounder))
+        print ('D0                    = ',round(D0,rounder))
+        print ('T                     = ',round(T,rounder))
+        print ('GMST_hrs              = ',round(GMST_hrs,rounder))
+        print ('Mean_Longitude_hrs    = ',round(Mean_Longitude_hrs,rounder))
+        print ('Mean_Longitude_deg    = ',round(Mean_Longitude_deg,rounder))
+        print ('--------------')
+        print ('Astronomical Fact')
+        print ('--------------')
+        print ('Perihelion_deg        = ',round(Perihelion_deg,rounder))
+        print ('Eccentricity          = ',round(Eccentricity,rounder))
+        print ('Obliquity_deg         = ',round(Obliquity_deg,rounder))
+        print ('Obliquity_rad         = ',round(Obliquity_rad,rounder))
+        print ('--------------')
+        print ('Solving Kepler')
+        print ('--------------')
+        print ('Mean_Anomaly_deg      = ',round(Mean_Longitude_hrs,rounder))
+        print ('Mean Anomaly rad      = ',round(Mean_Anomaly_rad,rounder))
+        print ('Eccent Anomaly Iter 1 = ',round(E1,rounder))
+        print ('Eccent Anomaly Iter 2 = ',round(E2,rounder))
+        print ('True_Anomaly_rad      = ',round(True_Anomaly_rad,rounder))
+        print ('True_Anomaly_deg      = ',round(True_Anomaly_deg,rounder))
+        print ('True_Longitude_deg    = ',round(True_Long_deg,rounder))
+        print ('True_Longitude_rad    = ',round(True_Long_rad,rounder))
+        print ('Eccent_Efft_deg       = ',round(Eccent_Effect_deg,rounder))
+        print ('Eccent_Efft_min       = ',round(Eccent_Effect_min,rounder))
+        print ('                      = ',EoT_Dec_MMSS(Eccent_Effect_min))
+        print ('--------------')
+        print ('Right Ascension, Declination and EoT')
+        print ('--------------')
+        print ('Right_Ascension_rad   = ',round(Right_Ascension_rad,rounder))
+        print ('Right_Ascension_deg   = ',round(Right_Ascension_deg,rounder))
+        print ('                      = ',Dec_Deg_DMS(Right_Ascension_deg))
+        print ('Right_Ascension_hrs   = ',round(Right_Ascension_hrs,rounder))
+        print ('                      = ',Dec_Hrs_HMS(Right_Ascension_hrs))
+        print ('Declination_rad       = ',round(Declination_rad,rounder))
+        print ('Declination_deg       = ',round(Declination_deg,rounder))
+        print ('                      = ',Dec_Deg_DMS(Declination_deg))
+        print ('--------------')
+        print ('EoT_deg               = ',round(EoT_deg,rounder))
+        print ('EoT_min               = ',round(EoT_min,rounder))
+        print ('                      = ',EoT_Dec_MMSS(EoT_min))
+        print ('Obliq_Effect_min      = ',round(Obliq_Effect_min,rounder))
+        print ('                      = ',EoT_Dec_MMSS(Obliq_Effect_min))
+        print ('---------------------')
+        print ('Long_Corr             = ',round(Long_Corr,rounder))
+        print ('                      = ',EoT_Dec_MMSS(Long_Corr))
+        print ('EoT_Corr_min          = ',round(EoT_Corr_min,rounder))
+        print ('                      = ',EoT_Dec_MMSS(EoT_Corr_min))
+        print ('---------------------')
+        print ('Solar_Noon_hrs        = ',round(Solar_Noon_hrs,rounder))
+        print ('                      = ',Dec_Hrs_HMS(Solar_Noon_hrs))
+        print ('Hour_Angle_hrs        = ',round(Hour_Angle_hrs,rounder))
+        print ('Hour_Angle_rad        = ',round(Hour_Angle_rad,rounder))
+        print ('Latitude_rad          = ',round(Latitude_rad,rounder))
+        print ('Altitude_rad          = ',round(Altitude_rad,rounder))
+        print ('Altitude_deg          = ',round(Altitude_deg,rounder))
+        print ('                      = ',Dec_Deg_DMS(Altitude_deg))
+        print ('a                     = ',round(a,rounder))
+        print ('b                     = ',round(b,rounder))
+        print ('Azimuth_rad           = ',round(Azimuth_rad,rounder))
+        print ('Azimuth_deg           = ',round(Azimuth_deg,rounder))
+        print ('                      = ',Dec_Deg_DMS(Azimuth_deg))
+        print ('q_hrs                 = ',round(q_hrs,rounder))
+        print ('SR_hrs                = ',round(SR_hrs,rounder))
+        print ('                      = ',Dec_Hrs_HMS(SR_hrs))
+        print ('SS_hrs                = ',round(SS_hrs,rounder))
+        print ('                      = ',Dec_Hrs_HMS(SS_hrs))
+        print ('r_deg                 = ',round(r_deg,rounder))
+        print ('SRA_deg               = ',round(SRA_deg,rounder))
+        print ('SSA_deg               = ',round(SSA_deg,rounder))
         print ()
     return EoT_min,EoT_Corr_min,Declination_deg
 
@@ -326,7 +326,7 @@ def Year_Output(Year,Longitude,Zone):
     JD_1_Jan     = Get_Julian_Day(Year,1,1,Hour)
     Days_in_Year = 365 if Year%4 != 0 else 366
 
-    print (“Date “ + “\t” + “EoT “+ “\t” + “Long Corr EoT “+ “\t” + “RA “+ “\t” + “Decl “ +  “\t” + “Alt “+  “\t” + “Az “  + “\r” )
+    print ('Date ' + '\t' + 'EoT '+ '\t' + 'Long Corr EoT '+ '\t' + 'RA '+ '\t' + 'Decl ' +  '\t' + 'Alt '+  '\t' + 'Az '  + '\r' )
 
     for i in range(Days_in_Year): 
         JD                  = JD_1_Jan + i
@@ -376,7 +376,7 @@ def Year_Output(Year,Longitude,Zone):
         Azimuth_rad         = atan2(a,b)
         Azimuth_deg         = degrees(Azimuth_rad)%360
 
-        print (Get_Calendar_Date(JD) + “\t “ + str(round(EoT_min,rounder))+ “\t” + str(round(EoT_Corr_min,rounder))+ “\t “ + str(round(Right_Ascension_hrs,rounder))+ “\t “ + str(round(Declination_deg,rounder))+ “\t “ + str(round(Altitude_deg,rounder))+ “\t “ + str(round(Azimuth_deg,rounder))  + “\r” )
+        print (Get_Calendar_Date(JD) + '\t ' + str(round(EoT_min,rounder))+ '\t' + str(round(EoT_Corr_min,rounder))+ '\t ' + str(round(Right_Ascension_hrs,rounder))+ '\t ' + str(round(Declination_deg,rounder))+ '\t ' + str(round(Altitude_deg,rounder))+ '\t ' + str(round(Azimuth_deg,rounder))  + '\r' )
 
 # Short Fourier Routines for EoT & Declination
 
@@ -395,21 +395,21 @@ def EoT_Fourier(Year, Month, Day, Longitude, Zone):
     Long_Corr = 4 * (Zone * 15 - Longitude)
     EoT_Corr = EoT + Long_Corr
     if Detail_Print:
-        print (“A              = “,A)
-        print (“B              = “,B)
-        print (“Days_from_2000 = “,round(Days_from_2000,rounder))
-        print (“Index          = “,round(Index,rounder))
-        print (“Theta          = “,round(Theta,rounder))
-        print (“EoT1           = “,round(EoT1,rounder))
-        print (“EoT2           = “,round(EoT2,rounder))
-        print (“EoT3           = “,round(EoT3,rounder))
-        print (“EoT4           = “,round(EoT4,rounder))
-        print (“EoT            = “,round(EoT ,rounder))
-        print (“               = “,EoT_Dec_MMSS(EoT))
-        print (“Long_Corr      = “,round(Long_Corr,rounder))
-        print (“               = “,EoT_Dec_MMSS(Long_Corr))
-        print (“EoT_Corr       = “,round(EoT_Corr,rounder))
-        print (“               = “,EoT_Dec_MMSS(EoT_Corr))
+        print ('A              = ',A)
+        print ('B              = ',B)
+        print ('Days_from_2000 = ',round(Days_from_2000,rounder))
+        print ('Index          = ',round(Index,rounder))
+        print ('Theta          = ',round(Theta,rounder))
+        print ('EoT1           = ',round(EoT1,rounder))
+        print ('EoT2           = ',round(EoT2,rounder))
+        print ('EoT3           = ',round(EoT3,rounder))
+        print ('EoT4           = ',round(EoT4,rounder))
+        print ('EoT            = ',round(EoT ,rounder))
+        print ('               = ',EoT_Dec_MMSS(EoT))
+        print ('Long_Corr      = ',round(Long_Corr,rounder))
+        print ('               = ',EoT_Dec_MMSS(Long_Corr))
+        print ('EoT_Corr       = ',round(EoT_Corr,rounder))
+        print ('               = ',EoT_Dec_MMSS(EoT_Corr))
         print ()
     return EoT,EoT_Corr
 
@@ -440,18 +440,18 @@ def Decl_Fourier(Year, Month, Day, Hour):
     Decl4 = 0.0415 * sin(4 * Theta + 4.8465)
     Decl  = Aver + Decl1 + Decl2 + Decl3 + Decl4
     if Detail_Print:
-        print (“A              = “,A)
-        print (“B              = “,B)
-        print (“Days_from_2000 = “,round(Days_from_2000,rounder))
-        print (“Index          = “,round(Index,rounder))
-        print (“Theta          = “,round(Theta,rounder))
-        print (“Aver           = “,round(Aver,rounder))
-        print (“Decl1          = “,round(Decl1,rounder))
-        print (“Decl2          = “,round(Decl2,rounder))
-        print (“Decl3          = “,round(Decl3,rounder))
-        print (“Decl4          = “,round(Decl4,rounder))
-        print (“Decl           = “,round(Decl ,rounder))
-        print (“               = “,Dec_Deg_DMS(Decl))
+        print ('A              = ',A)
+        print ('B              = ',B)
+        print ('Days_from_2000 = ',round(Days_from_2000,rounder))
+        print ('Index          = ',round(Index,rounder))
+        print ('Theta          = ',round(Theta,rounder))
+        print ('Aver           = ',round(Aver,rounder))
+        print ('Decl1          = ',round(Decl1,rounder))
+        print ('Decl2          = ',round(Decl2,rounder))
+        print ('Decl3          = ',round(Decl3,rounder))
+        print ('Decl4          = ',round(Decl4,rounder))
+        print ('Decl           = ',round(Decl ,rounder))
+        print ('               = ',Dec_Deg_DMS(Decl))
         print ()
     return Decl
 
@@ -478,19 +478,19 @@ def Year_Output_Fourier(Year,Longitude,Zone):
     Detail_Print    = False
     JD_1_Jan        = Get_Julian_Day(Year,1,1,Hour)
     Days_in_Year    = 365 if Year%4 != 0 else 366
-    print (“Date “ + “\t” + “EoT “+ “\t” + “Long Corr EoT “+ “\t” + “Declination “ + “\r” )
+    print ('Date ' + '\t' + 'EoT '+ '\t' + 'Long Corr EoT '+ '\t' + 'Declination ' + '\r' )
     for i in range(Days_in_Year): 
         JD           = JD_1_Jan + i
         Result       = EoT_JD_Fourier(JD, Longitude,Zone)
         EoT_min      = Result[0]
         EoT_Corr_min = Result[1]
         Decl_deg     = Decl_JD_Fourier(JD,Longitude,Zone)
-        print (Get_Calendar_Date(JD) + “\t “ + str(round(EoT_min,rounder))+ “\t” + str(round(EoT_Corr_min,rounder))+ “\t “ + str(round(Decl_deg,rounder))  + “\r” )
+        print (Get_Calendar_Date(JD) + '\t ' + str(round(EoT_min,rounder))+ '\t' + str(round(EoT_Corr_min,rounder))+ '\t ' + str(round(Decl_deg,rounder))  + '\r' )
 
 # Analemma
 
 def Calculate_Analemma():
-    File = open(Filename,’w’)
+    File = open(Filename,'w')
     Print_Super_Header(File)
     Analemmas         (File)
     Declination_Lines (File)
@@ -500,7 +500,7 @@ def Analemmas(File):
     # ----------------------------------------------------------
     # Draw the Analemmas
     # Loop over the Hours requested in the day, then each day in the year 
-    # It calls routine ‘Shadow’ (& various output formatting rountines)
+    # It calls routine 'Shadow' (& various output formatting rountines)
     # ---------------------------------------------------------- 
     
     Print_Analemma_Header(Hour_Start,File)  
@@ -510,7 +510,7 @@ def Analemmas(File):
     for Minute in range(Start_Minute,End_Minute+1,Analemma_Minute_Inc) :
         Hour           = Minute / 60.
         Minute_in_Hour = Minute % 60
-        Time_Text = str(int(Hour)) + “:” + (“0” if Minute_in_Hour < 10 else “”)+ str(Minute_in_Hour) + “ hh:mm”
+        Time_Text = str(int(Hour)) + ':' + ('0' if Minute_in_Hour < 10 else '')+ str(Minute_in_Hour) + ' hh:mm'
         Print_Analemma_Sub_Header(Time_Text,File)
         
         for Day in range(1,Days_in_Year+1) :
@@ -538,10 +538,10 @@ def Declination_Lines(File):
     # First: Loop over the Days in a Year day, looking for the days on which
     # a declination line is requested  -
     # Second: Loop over Hours during the day
-    # It calls routine ‘Shadow’ (& various output formatting rountines)
+    # It calls routine 'Shadow' (& various output formatting rountines)
     # ----------------------------------------------------------
     
-    # Don’t try Declination Lines if only a Single Analemma
+    # Don't try Declination Lines if only a Single Analemma
     if not (Want_Declination_Lines or Hour_Start != Hour_End) :
         return
     
@@ -559,7 +559,7 @@ def Declination_Lines(File):
             if (Which_Analemma == 1 and Summer_to_Winter) or (Which_Analemma == 2 and Winter_to_Summer): 
                 continue
     
-            Last_Date_Text     = “”
+            Last_Date_Text     = ''
             Minute_Start       = Hour_Start * 60
             Minute_End         = Hour_End   * 60
             for Minute in range (Minute_Start,Minute_End,Declination_Increment):
@@ -630,67 +630,67 @@ def Shadow(The_Year,The_Month,The_Day,The_Hour,The_Minute,The_Longitude,The_Lati
             # ----------------------------------------------------------
             xx = x + Nodus_x
             yy = y + Nodus_y
-            On_Plate = “ “ if ((xx >= -WIDTH/2 and xx <= WIDTH/2) and (yy >= -HEIGHT/2 and yy <= HEIGHT/2)) else “Off Plate”
+            On_Plate = ' ' if ((xx >= -WIDTH/2 and xx <= WIDTH/2) and (yy >= -HEIGHT/2 and yy <= HEIGHT/2)) else 'Off Plate'
             
             # Write the output to file
-            File.write(str(The_Year) +”\t” + str(The_Month) + “\t” + str(The_Day) + “\t” + str(The_Hour) + “\t” + str(The_Minute) + “\t” + str(round(xx,3)) +”\t”+ str(round(yy,3))+”\t”+ On_Plate +”\r”)
+            File.write(str(The_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t' + str(round(xx,3)) +'\t'+ str(round(yy,3))+'\t'+ On_Plate +'\r')
             return
         else:
-            File.write(str(The_Year) +”\t” + str(The_Month) + “\t” + str(The_Day) + “\t” + str(The_Hour) + “\t” + str(The_Minute) + “\t\t\t” + “Behind”+”\r”)
+            File.write(str(The_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t\t\t' + 'Behind'+'\r')
             return 
     else:
-        File.write(str(My_Year) +”\t” + str(The_Month) + “\t” + str(The_Day) + “\t” + str(The_Hour) + “\t” + str(The_Minute) + “\t\t\t” + “Night”+”\r”)
+        File.write(str(My_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t\t\t' + 'Night'+'\r')
         return
 
 def Print_Super_Header(File) :
-    File.write (“Zenithal_Distance    = “ + str(Zenithal_Dist)        + “ degrees”+”\r”)
-    File.write (“Gnomonic_Declination = “ + str(Gnomonic_Decl)        + “ degrees”+”\r”)
-    File.write (“Dial_Plate_Width     = “ + str(Dial_Plate_Width )    +”\r”)
-    File.write (“Dial_Plate_Height    = “ + str(Dial_Plate_Height)    +”\r”)
-    File.write (“Nodus_Height         = “ + str(Nodus_Height     )    +”\r”)
-    File.write (“Nodus_x              = “ + str(round(Nodus_x,2))     + “ from plate centre (+ve to right)”+”\r”)
-    File.write (“Nodus_y              = “ + str(round(Nodus_y,2))     + “ from plate centre (+ve up)”      +”\r”)
-    File.write (“Latitude             = “ + str(Latitude)             + “ degrees +ve N”                       +”\r”)
-    File.write (“Longitude            = “ + str(Longitude)            + “ degrees +ve E of Greenwich”          +”\r”)
-    File.write (“Time Zone            = “ + str(Zone)                 + “ hours +ve E of Greenwich”            +”\r”)
-    File.write (“Polar Style x,y      = “ + str(round(X0,2)) + “,” + str(round(Y0,2))                          +”\r”)                        
+    File.write ('Zenithal_Distance    = ' + str(Zenithal_Dist)        + ' degrees'+'\r')
+    File.write ('Gnomonic_Declination = ' + str(Gnomonic_Decl)        + ' degrees'+'\r')
+    File.write ('Dial_Plate_Width     = ' + str(Dial_Plate_Width )    +'\r')
+    File.write ('Dial_Plate_Height    = ' + str(Dial_Plate_Height)    +'\r')
+    File.write ('Nodus_Height         = ' + str(Nodus_Height     )    +'\r')
+    File.write ('Nodus_x              = ' + str(round(Nodus_x,2))     + ' from plate centre (+ve to right)'+'\r')
+    File.write ('Nodus_y              = ' + str(round(Nodus_y,2))     + ' from plate centre (+ve up)'      +'\r')
+    File.write ('Latitude             = ' + str(Latitude)             + ' degrees +ve N'                       +'\r')
+    File.write ('Longitude            = ' + str(Longitude)            + ' degrees +ve E of Greenwich'          +'\r')
+    File.write ('Time Zone            = ' + str(Zone)                 + ' hours +ve E of Greenwich'            +'\r')
+    File.write ('Polar Style x,y      = ' + str(round(X0,2)) + ',' + str(round(Y0,2))                          +'\r')                        
         
     if Which_Analemma == 0:
-        File.write (“Results for Full Analemma\r”)
+        File.write ('Results for Full Analemma\r')
     elif Which_Analemma == 1:
-        File.write (“Results for Daylight Increasing Days\r”)
+        File.write ('Results for Daylight Increasing Days\r')
     else:
-        File.write (“Results for Daylight Decreasing Days\r”)
-    File.write (“\r”)
-    File.write (“Warnings may be...\r”)
-    File.write (“   ‘Off Plate’ = nodus shadow is not on the dial plate\r”)
-    File.write (“   ‘Behind’    = calculated nodus shadow behing the dial plate\r”)
-    File.write (“   ‘Below’     = night time - sun below horizon\r”)
-    File.write (“\r”)
+        File.write ('Results for Daylight Decreasing Days\r')
+    File.write ('\r')
+    File.write ('Warnings may be...\r')
+    File.write ('   Off Plate = nodus shadow is not on the dial plate\r')
+    File.write ('   Behind    = calculated nodus shadow behing the dial plate\r')
+    File.write ('   Below     = night time - sun below horizon\r')
+    File.write ('\r')
 
 def Print_Analemma_Header(The_Hour,File):
-    File.write (“+++++++++++++++++++++++++++++++++++++++++++++++\r”)
-    File.write (“A N A L E M M A   L I N E S\r”)
-    File.write (“+++++++++++++++++++++++++++++++++++++++++++++++\r”)
-    File.write (“Year”+”\t”+”Month”+”\t”+”Day”+”\t”+”Hour”+”\t”+”Minute”+”\t”+”X-Coords” +”\t”+”Y-Coords” +”\t” + “Warnings\r”)
+    File.write ('+++++++++++++++++++++++++++++++++++++++++++++++\r')
+    File.write ('A N A L E M M A   L I N E S\r')
+    File.write ('+++++++++++++++++++++++++++++++++++++++++++++++\r')
+    File.write ('Year'+'\t'+'Month'+'\t'+'Day'+'\t'+'Hour'+'\t'+'Minute'+'\t'+'X-Coords' +'\t'+'Y-Coords' +'\t' + 'Warnings\r')
 
 def Print_Analemma_Sub_Header(Time_Text,File):
-    File.write (“===============================================\r”)
-    File.write (“Analemma for “ + Time_Text +”\r”)
-    File.write (“===============================================\r”)
+    File.write ('===============================================\r')
+    File.write ('Analemma for ' + Time_Text +'\r')
+    File.write ('===============================================\r')
 
 def Print_Declination_Line_Header(File):
     if not(Want_Declination_Lines or Hour_Start != Hour_End): 
-        File.write (“\r”)
-        File.write (“===============================================\r”)
-        File.write (“D E C L I N A T I O N   L I N E S”+”\r”)
-        File.write (“===============================================\r”)
-        File.write (“Year”+”\t”+”Month”+”\t”+”Day”+”\t”+”Hour”+”\t”+”Minute”+”\t”+”\t”+”X-Coords” +”\t”+”Y-Coords” +”\t” + “Warnings\r”)
+        File.write ('\r')
+        File.write ('===============================================\r')
+        File.write ('D E C L I N A T I O N   L I N E S'+'\r')
+        File.write ('===============================================\r')
+        File.write ('Year'+'\t'+'Month'+'\t'+'Day'+'\t'+'Hour'+'\t'+'Minute'+'\t'+'\t'+'X-Coords' +'\t'+'Y-Coords' +'\t' + 'Warnings\r')
 
 def Print_Declination_Lines_Sub_Header(My_Date_Text,File) :
-    File.write (“===============================================\r”)
-    File.write (“Declination Line for “ + My_Date_Text+”\r”)
-    File.write (“===============================================\r”)
+    File.write ('===============================================\r')
+    File.write ('Declination Line for ' + My_Date_Text+'\r')
+    File.write ('===============================================\r')
 
 def Get_Julian_Day(Year, Month, Day, Hour) :
     #===========================================
@@ -731,7 +731,7 @@ def Get_Calendar_Date(The_JD) :
     #======================================================
     # ROUTINE TO GET CALENDAR DATE AND TIME FROM JULIAN DAY
     #Reference: Practical Astronomy with your Calculator 3rd Edn : Duffet Smith - Page 8
-    Month_List = [“Jan”,”Feb”,”Mar”,”Apr”,”May”,”Jun”,”Jul”,”Aug”,”Sep”,”Oct”,”Nov”,”Dec”]
+    Month_List = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     JDD                = The_JD + .5
     III                = int(JDD)
     FFF                = JDD - III
@@ -759,12 +759,12 @@ def Get_Calendar_Date(The_JD) :
         Yearo          = DD - 4716
     else :
         Yearo          = DD - 4715
-    return str(Dayo) + ‘-’ + Month_List[Montho-1] + ‘-’ + str(Yearo)
+    return str(Dayo) + '-' + Month_List[Montho-1] + '-' + str(Yearo)
 
 def Get_Date_from_Day_in_Year(Year,Day):
     # ---------------------------------------------------------------
     # Utility to provide the civil date from Day Number 
-    # Input ‘Day’ is day in year starting with 1 on 1st Jan
+    # Input 'Day' is day in year starting with 1 on 1st Jan
     # Output is... 
     #           Day in Month e.g 6th, 13th etc
     #           Month Index e.g 2 for Frbruary
@@ -777,8 +777,8 @@ def Get_Date_from_Day_in_Year(Year,Day):
     else:
         First_of_Month   = [0,1,32,61,92,122,153,183,214,245,275,306,336]
         end = 366
-    Month_Names          = [“ “,”Jan”,”Feb”,”Mar”,”Apr”,”May”,”Jun”,
-                                “Jul”,”Aug”,”Sep”,”Oct”,”Nov”,”Dec”]
+    Month_Names          = [' ','Jan','Feb','Mar','Apr','May','Jun',
+                                'Jul','Aug','Sep','Oct','Nov','Dec']
     Month_Index          = 0
     Last_Month_Index     = 0
     for Day_in_Year in range(1,end+1):
@@ -787,42 +787,42 @@ def Get_Date_from_Day_in_Year(Year,Day):
             Last_Month_Index = Day_in_Year 
         if Day_in_Year == Day:
             Day_in_Month = Day_in_Year - Last_Month_Index + 1
-            return Day_in_Month, Month_Index, str(Day_in_Month) + “-” + Month_Names[Month_Index]
+            return Day_in_Month, Month_Index, str(Day_in_Month) + '-' + Month_Names[Month_Index]
 
 def EoT_Dec_MMSS(The_EoT):
     # -----------------------------------------------------
     # Routine to convert Decimal Minutes to Minutes & Seconds
-    Sign = “+”
-    if The_EoT < 0 : Sign = “-”
+    Sign = '+'
+    if The_EoT < 0 : Sign = '-'
     M0   = abs(The_EoT)
     M1   = int(M0)
     S0   = 60 * (M0 - M1)
-    return Sign + ‘%02.0f’ % M1 + “:” + ‘%02.1f’ % S0 + “ mm:ss”
+    return Sign + '%02.0f' % M1 + ':' + '%02.1f' % S0 + ' mm:ss'
 
 def Dec_Deg_DMS(The_Degs) :
     # -----------------------------------------------------
     # Routine to convert Decimal Degrees to Degrees,Minutes & Seconds
     D0 = abs(The_Degs)
-    Sign = “+”
-    if (The_Degs < 0) : Sign = “-”
+    Sign = '+'
+    if (The_Degs < 0) : Sign = '-'
     D1 = int(D0)
     M0 = 60. * (D0 - D1)
     M1 = int (M0)
     S0 = 60. * (M0 - M1)
-    return Sign + ‘%.02d’ % D1 + u”° “ +’%.02d’ % M1 + u”’ “ + ‘%2.1f’ % S0 + u”””
+    return Sign + str(round(D1,2)) + u'° ' +str(round(M1,2)) + u'' ' + str(round(S0,2)) + u'''
 
 def Dec_Hrs_HMS(The_Hrs) :
     # -----------------------------------------------------
     # Routine to convert Decimal Hours to Hours,Minutes & Seconds
     D0 = abs(The_Hrs)
-    Sign = “+”
-    if (The_Hrs < 0) : Sign = “-”
+    Sign = '+'
+    if (The_Hrs < 0) : Sign = '-'
     D1 = int(D0)
     M0 = 60. * (D0 - D1)
     M1 = int (M0)
     S0 = 60. * (M0 - M1)
-    return Sign + ‘%.02d’ % D1 + u”:” +’%.02d’ % M1 + u”:” + ‘%2.1f’ % S0 + u” hh:mm:ss”
+    return Sign + '%.02d' % D1 + u':' +'%.02d' % M1 + u':' + '%2.1f' % S0 + u' hh:mm:ss'
 
 Calculate()
 
-print (“Done”)
+print ('Done')
