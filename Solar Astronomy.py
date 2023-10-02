@@ -1,4 +1,4 @@
-# Description & Exanple Input to Routines
+from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 # -----------------------------------------------------------------------------------
 # SOLAR ASTRONOMY
 # -----------------------------------------------------------------------------------
@@ -6,105 +6,126 @@
 # Should work on all releases of Python
 # Free for anyone to use without any guarantees!
 #
-# Contains a number Main Sub_Routines - all called by subroutine Calculate
-# ----Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone,DST)
-#     calculates EoT, Longitude corrected EoT & Declination
-#     NOTA BENE
-#     by changing the return statement at the end of the routine,
-#     any other parameter can be output. (Do not change if you are using the Analemma routines)
-# ----Year_Output(Year,Longitude,Zone)
-#     provides EoT,Longitude Corrected EoT, Right Ascension, Declination, Altitude & Azimuth
-#     as a tab-delimited output copy and pastable into a spreadsheet
-# ----EoT_Fourier(Year,Month,Day,Longitude,Zone) & EoT_JD_Fourier
-#     provides EoT & Longitude Corrected EoT for any given date & time or Julian Day
-# ----Decl_Fourier(Year,Month,Day,Longitude,Zone) & Decl_JD_Fourier 
-#     provides Solar Declination for any given date & time or Julian Day
-# -----------------------------------------------------
-#-----Calculate_Analemma
-#     sets up to draw Analemmas & Declination Lines
-#     Analemmas - calculates analemma coordinates
-#                 using subroutine Shadow 
-#     Declination_Lines - calculates declination lines coordinates
-#                         using subroutine Shadow 
-#     Shadow - calculates the coordinates of the nodus' shadow on any time & date
-#              using subroutine Sun
-#     Five Output Print subroutines
-# -----------------------------------------------------
-# Also contains service routines
-# ----Get_Julian_Day            (Year,Month,Day,Hour)    
-# ----Get_Calendar_Date         (The_JD)
-# ----Get_Date_from_Day_in_Year (Year,Day) # where 1st Jan = 1, etc
-# ----EoT_Dec_MMSS              (The_EoT)
-# ----Dec_Deg_DMS               (The_Degs)
+# NOTA BENE
+# where Time is input, it is local STANDARD time (i.e.no Daylight saving). 
+# Hence Time Zone occurs in many routines to correct to UTC,
 
-#     Much of the code in routines Sun, EoT_Fourier and Decl_Fourier
-#     relates to printing out all the calculation steps for interest 
-#     or debugging purposes.
+# The code performs four Main Tasks - each of which is chosen and
+# specified at the beginning of the code
+
+# FIRST TASK calculates the essential Solar parameters for a given location and date
+#     calculated by subroutine Sun_JD(JD)
+#     its output is an array comprising:
+#          EoT, Longitude Corrected EoT,
+#          Right Ascension, Declination
+#          Solar Altitude, Azimuth
+#          approx time of Sunrise, Sunset
+#          NOTA BENE any other calculated solar parameter can be
+#               output by changing the return parameters of this routine
+#               but do not change if caulculating an analemma
+#     Subservient routines are 
+#          Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone) which calls Sun_JD(JD)
+#          Sun_Year(Year,Longitude,Zone) which gives values for noon over a year
+#     output is a tab-delimited which can be pasted into any spreadsheet
+# 
+# SECOND TASK quickly calculates noon EoT,Longitude Corrected EoT and Declination
+#     calculated by subroutine EoT_Decl_JD_Fourier(JD)
+#     Output is a 2 value array of Longitude Corrected EoT and Declination
+#     Subservient routines are 
+#         EoT_Decl_Fourier(Year,Month,Day,Hour,Longitude,Zone)
+#         Year_Output_Fourier(Year,Longitude,Zone)
+#     output is a tab-delimited which can be pasted into any spreadsheet
+# 
+# THIRD TASK the coordinates required to plot an Analemma on any plane surface
+#     a full analemma or days-lengthening or days-shortening analemma can be chosen
+#     calculated by subroutine Calculate_Analemma
+#     four main subroutines are called
+#         Analemmas         (File)
+#         Declination_Lines (File)
+#         each of which calls subroutine 
+#            Sol(.....) which produces the x-y coordionates of the nodus shadow on the plane
+#     Output is a spreadsheet-readable text file with the x-y coordinates
+
+# FOURTH TASK calculate the values needed for a 'Victorian' equation table
+#     it returns either a table for a given year -or- averages over a leap cycle 
+#     Output is a spreadsheet-readable text file with dates and values
+#  
+# There are a number of service routines
+#     Julian(Year,Month,Day,Hour,Zone) which gives the Julian Day
+#     Get_Calendar_Date(The_JD,Zone) which converts between Julian Day and normal calendar values
+#     EoT_Dec_MMSS(The_EoT) which formats decimal minutes to mins and second 
+#     Dec_Deg_DMS(The_Degs) which formats decimal degrees to degrees, mins and secs
+#     Dec_Hrs_HMS(The_Hrs) which formats decimal hours to degrees, mins and secs
+
+# There a number of self explanatory print routines used by the Analemma routines
+
+# Much of the code in routines Sun, EoT_Decl_Fourier
+# relates to printing out all the calculation steps for interest 
+# or debugging purposes.
 # ---------------------------------------------------------------------------------------
-
-from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 
 # ---------------------------------------------------------------------------------------
 # What is Wanted 
 # ---------------------------------------------------------------------------------------
-Required     = 0        # 0 = Sun - returns EoT, long corr EoT, RA & Decl, Azimuth & Altitude; 
-                        # 1 = Fourier ; 
+global Detail_Print 
+Required       = 2      # 0 = Sun - returns EoT, long corr EoT, RA & Decl, Azimuth & Altitude;
+                        # 1 = Fourier - returns EoT, long corr EoT & Decl; 
                         # 2 = Analemma calculations
-Year_Calc    = True     # if True, provides values for a whole year
+                        # 3 = Table Table
+Which_Analemma = 2      # 0 = Full Analemma : 
+                        # 1 = Daylight Increasing (Winter and Spring) 
+                        # 2 = Daylight Shortening (Summer and Autumn)
+Table_Type     = 0      # 0 = Single Year
+                        # 1 = Leap Cycle Average
+Table_Fineness = 1      # 0 = every minute
+                        # 1 = every half minute
+Year_Calc      = True   # if True,  provides values for a whole year at noon 
                         # if False, provides a single set of calculations
-Detail_Print = False    # Prints detailed calculation steps for day calculation
-rounder      = 5        # rounds output to these number of decimals
-
+Detail_Print   = False  # Prints detailed calculation steps for single day calculation
+rounder        = 5      # rounds output to these number of decimals to results
 # ---------------------------------------------------------------------------------------
-# Input 
+# Location Input 
 # ---------------------------------------------------------------------------------------
-Place        = 'Athens'
-Longitude    = 23.71667 # Degrees : +ve East of Greenwich
-Latitude     = 37.9666  # Degrees : +ve East of Greenwich
-Zone         = 2        # Hrs     : +ve East of Greenwich
-DST          = 0
-Year         = 2025
-Month        = 2
-Day          = 13
-Hour         = 12
-DST          = 0
+Place          = 'Athens'
+Longitude      = 23.71667 # Degrees : +ve East of Greenwich
+Latitude       = 37.96667 # Degrees : +ve East of Greenwich
+Zone           = 2        # Hrs     : +ve East of Greenwich
 
+Year           = 2024
+Month          = 2        # not required for Year calculation or analemma
+Day            = 13       # not required for Year calculation or analemma
+Hour           = 12       # not required for Year calculation or analemma
+
+#========================================================================================
 #========================================================================================
 # FOLLOWING INPUT IS ONLY REQUIRED IF YOU WANT THE OUTPUT OF AN ANALEMMA
 # from Robert Sagot and Denis Savoie of Commission des Cadrans Solaires
 # Quoted in Meeus, Astronomical Algorithms - Chapter 58
 # -----------------------------------------------------
-Hour_Start            = 11 
-Hour_End              = 14       #   e.g. will draw analemmas from 11 a.m. to 2 p.m.
-Analemma_Minute_Inc   = 15       #   e.g 15 if you want analemmas every 15 minutes
-Declination_Increment = 5        #   e.g 5 if you want declination points every 5 minutes
+# Note Output File Folder & File may be specific to user's operating system
+# You may have to set sepecific permissions to write to file
+# -----------------------------------------------------
+Hour_Start             = 11
+Hour_End               = 14       #   e.g. will draw analemmas from 11 a.m. to 2 p.m.
+Analemma_Minute_Inc    = 30       #   e.g 15 if you want analemmas every 15 minutes
+Declination_Increment  = 2        #   e.g 5 if you want declination points every 5 minutes
 Want_Declination_Lines = True
-Which_Analemma        = 0        # 0 = Full Analemma : 
-                                 # 1 = Daylight Increasing (Winter and Spring) 
-                                 # 2 = Daylight Shortening (Summer and Autumn)
-Mean_or_Solar         = True     # if False, will produce results for traditional straight-line solar sundial
+Mean_or_Solar          = True     # if False, will produce results for traditional straight-line solar sundial
 # -----------------------------------------------------
 # Sizes are unitless: Output the same as input
-Dial_Plate_Width      = 16 
-Dial_Plate_Height     = 16
-Nodus_Height          = 5  
-Nodus_x               = 4   # Shift Nodus away from physical centre of the Dial Plate in x-direction
-Nodus_y               = 4   # ditto in y-direction (+ve Up)
-Zenithal_Dist         = 60  # Degrees :  0 = Horizontal, 90 = Vertical
-Gnomonic_Decl         = 50  # Degrees :  0 = due South,  90 = due West, 
-                            #          180 = due North, 270 = due East
+Dial_Plate_Width       = 16 
+Dial_Plate_Height      = 16
+Nodus_Height           = 5  
+Nodus_x                = 4   # Shift Nodus away from physical centre of the Dial Plate in x-direction
+Nodus_y                = 4   # ditto in y-direction (+ve Up)
+Zenithal_Dist          = 60  # Degrees :  0 = Horizontal, 90 = Vertical
+Gnomonic_Decl          = 50  # Degrees :  0 = due South,  90 = due West, 
+                             #          180 = due North, 270 = due East
 # -----------------------------------------------------
 # Input Dates of Solstices, Equinoxs, etc
 # -----------------------------------------------------
-Spring_Equinox    =  79 # where 1 for 1st Jan
-Summer_Solstice   = 172
-Autumn_Equinox    = 265
-Winter_Solstice   = 355
-Equinoxs          = (Spring_Equinox , Autumn_Equinox )
-Solstices         = (Summer_Solstice, Winter_Solstice)
-# following 2 items must include at lesat 2 items : use (999,999) if none required
-Declination_Days  = (1,10,20,999) # e.g. lines on 1st, 10th, 20th of the month
-Special_Days      = (40,999)   # use for birthdays, etc
+Declination_Days  = [1,10,20]  # e.g. lines on 1st, 10th, 20th of the month
+Special_Days      = ["12-May"] # use for birthdays, etc
 Days_in_Year      = 366 if Year % 4 == 0 else 365
 # -----------------------------------------------------
 L                 = radians(Latitude)
@@ -114,68 +135,84 @@ P                 = sin(L) * cos(Z) - cos(L) * sin(Z)  * cos(D)
 # X0 & Y0 are the coodinates from the dial Plate centre of ...
 # ...the foot of a polar stylus passing through the nodus
 # i.e. the centre of the traditional dial
-X0                = Nodus_Height * cos(L) * sin(D) / P
+X0                = Nodus_Height * cos(L)  * sin(D) / P
 Y0                = Nodus_Height * (sin(L) * sin(Z) + cos(L) * cos(Z) * cos(D)) / P
-# -----------------------------------------------------
-# Note Output File Folder & File will be specific to user's operating system
-# You may have to set sepecific permissions to write to file
-Filename = '/Users/kevinkarney/Desktop/Annalemma.txt'
-
 #========================================================================================
+#========================================================================================
+
 def Calculate():
     # -----------------------------------------------------
-    # This is called from the last line of this code
+    # This is routine called from the last line of this code
+    # It selects the task required 
     # -----------------------------------------------------
     # ACCESS TO SUN ROUTINE
     if Required == 0:
         if Year_Calc == True:
+            Detail_Print = False
             print ('Year Result from Sun routine')
-            Year_Output(Year,Longitude,Zone)
+            Sun_Year(Year,Longitude,Zone) 
+            print ("\rThis output can copied and pasted into any spreadsheet")
         else:    
-            print ('Results from Sun routine')
-            Results = Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone,DST)
+            Results = Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone)
             print ('EoT                     = ',EoT_Dec_MMSS(Results[0]))
             print ('EoT Longitude Corrected = ',EoT_Dec_MMSS(Results[1]))
+            print ('Right Ascension         = ',Dec_Hrs_HMS (Results[2]))
+            print ('Solar Declination       = ',Dec_Deg_DMS (Results[3]))
+            print ('Altitude                = ',Dec_Deg_DMS (Results[4]))
+            print ('Azimuth                 = ',Dec_Deg_DMS (Results[5]))
+
     # ACCESS TO FOURIER ROUTINE
     elif Required == 1:
         if Year_Calc == True:
+            Detail_Print = False
             print ('Year Results from Fourier routines')
             Year_Output_Fourier(Year,Longitude,Zone)
+            print ("\rThis output can copied and pasted into any spreadsheet")
         else:
-            print ('Results from EoT_Fourier & Decl_Fourier routines')
-            Results = EoT_Fourier(Year, Month, Day, Longitude, Zone)
-            print ('EoT                     = ',EoT_Dec_MMSS(Results[0]))
-            print ('EoT Longitude Corrected = ',EoT_Dec_MMSS(Results[1]))
+            print ('Results from EoT_Decl_Fourier routines')
+            Results = EoT_Decl_Fourier(Year,Month,Day,Hour,Longitude,Zone)
+            print ('EoT                     = ',round(Results[0],rounder))
+            print ('                        = ',EoT_Dec_MMSS(Results[0]))
+            print ('EoT Longitude Corrected = ',round(Results[1],rounder))
+            print ('                        = ',EoT_Dec_MMSS(Results[1]))
+            print ('Solar Declination       = ',round(Results[2],rounder))
+            print ('                        = ',Dec_Deg_DMS (Results[2]))
+    
     # ACCESS TO ANALEMMA ROUTINE
     elif Required == 2:
+        Detailed_Print = False
         Calculate_Analemma()
 
-# EoT & Declination Calculation 
+    # ACCESS TO Table TABLE ROUTINE
+    elif Required == 3:
+        Detailed_Print = False
+        Calculate_Table(Year)
+    else:
+        print ("Wrong option. Set Required to between 0 & 3")
 
-def Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone,DST):
+def Sun_JD(JD):
     # -----------------------------------------------------
     # This does the main astronomical calculations
     # It returns the EoT, Longitude Corrected EoT & Declination
     # but these may be changed to any other parameter that has been calculated
     # -----------------------------------------------------
-    UTC_hrs             = Hour - Zone - DST
-    if UTC_hrs<0:  Day -=1
-    if UTC_hrs>24: Day +=1
-    UTC_hrs             = UTC_hrs % 24
-    if (Month <= 2) :
-        Year           -= 1
-        Month          += 12    
-    A                   = floor(Year/100)
-    B                   = 2 - A + floor(A/4)
-    JD = int(365.25*(Year + 4716)) + int(30.6001*(Month+1)) + Day + B - 1524.5
-    #-------------------
-    T                   = (JD - 2451545.)/36525
+    # -------------------
+    global Detail_Print
+    X = JD -.5
+    UTC_hrs = ((X-int(X)) * 24) % 24 # Extract UTC_hrs from Julian Day
+ 
     D0                  = JD - 2451545.
-    GMST_hrs            = (6.697374834 + 0.0657098242761  * D0 + 1.00273790935 * UTC_hrs + 0.000026 * T**2) % 24
+    T                   = D0 / 36525
+    
+    GMST_deg            = 280.46061837 + 360.98564736629 * D0  + 0.000387933 *T**2 - T**3/38710000.
+    GMST_deg            = GMST_deg % 360
+    GMST_hrs            = GMST_deg / 15.
+    LMST_Hrs            = GMST_hrs + Longitude / 15.
+    
     Mean_Longitude_hrs  = GMST_hrs + 12. - UTC_hrs
     Mean_Longitude_deg  = Mean_Longitude_hrs * 15
     #-------------------
-    # These values obtained from the Astronmical Almanac cvols between 2000 and 2023
+    # These values obtained from the Astronmical Almanac vols between 2000 and 2023
     Perihelion_deg      = 282.938     + 1.7     * T
     Eccentricity        = 0.016708617 - 0.00004 * T 
     Obliquity_deg       = 23.43929111 - 0.013   * T
@@ -219,39 +256,24 @@ def Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone,DST):
     b                   = sin(Declination_rad) - sin(Latitude_rad) * sin(Altitude_rad)
     Azimuth_rad         = atan2(a,b)
     Azimuth_deg         = degrees(Azimuth_rad)%360
-
     q_hrs               =(degrees(acos(-tan(Latitude_rad) * tan(Declination_rad)))) / 15
     SR_hrs              = Solar_Noon_hrs - q_hrs
     SS_hrs              = Solar_Noon_hrs + q_hrs
     r_deg               = degrees(acos(-sin(Declination_rad) / cos(Latitude_rad)))
     SRA_deg             = 180 - r_deg
     SSA_deg             = 180 + r_deg
+
     if Detail_Print:
-        print ('---------------------')
-        print ('Routine Sun - input')
-        print ('---------------------')
-        print ('Place                = ',Place)
-        print ('Longitude            = ',Longitude)
-        print ('Latitude             = ',Latitude)
-        print ('Zone                 = ',Zone)
-        print ('DST                  = ',DST)
-        print ('Year                 = ',Year)
-        if Month > 12:
-            Year  +=1
-            Month -= 12
-        print ('Month                = ',Month)
-        print ('Day                  = ',Day)
-        print ('Civil Time           = ',Hour)
         print ('--------------')
         print ('Time Related Parameters')
         print ('--------------')
         print ('UTC_Hrs               = ',UTC_hrs)
-        print ('A                     = ',int(A))
-        print ('B                     = ',int(B))
         print ('JD                    = ',round(JD,rounder))
         print ('D0                    = ',round(D0,rounder))
         print ('T                     = ',round(T,rounder))
+        print ('GMST_deg              = ',round(GMST_deg,rounder))
         print ('GMST_hrs              = ',round(GMST_hrs,rounder))
+        print ('LMST_Hrs              = ',round(LMST_Hrs,rounder))   
         print ('Mean_Longitude_hrs    = ',round(Mean_Longitude_hrs,rounder))
         print ('Mean_Longitude_deg    = ',round(Mean_Longitude_deg,rounder))
         print ('--------------')
@@ -320,80 +342,35 @@ def Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone,DST):
         print ('SRA_deg               = ',round(SRA_deg,rounder))
         print ('SSA_deg               = ',round(SSA_deg,rounder))
         print ()
-    return EoT_min,EoT_Corr_min,Declination_deg
+    return EoT_min,EoT_Corr_min,Right_Ascension_hrs,Declination_deg,Altitude_deg,Azimuth_deg,SR_hrs,SS_hrs
 
-def Year_Output(Year,Longitude,Zone):
+def Sun(Year,Month,Day,Hour,Longitude,Latitude,Zone):
+    JD = Julian (Year,Month,Day,Hour,Zone)     
+    Ans = Sun_JD(JD)
+    return Ans
+
+def Sun_Year(Year,Longitude,Zone):
     # ---------------------------------------------------------------
     # Routine to Calculate... 
     #      Equation of Time,Longitude Corrected Equation of Time, 
     #      Right Ascension, Declination, Altitude and Azimuth
     # It contains much of the same code as routine Sun
     # ---------------------------------------------------------------
+    global Detail_Print
     Detail_Print = False
-    JD_1_Jan     = Get_Julian_Day(Year,1,1,Hour)
-    Days_in_Year = 365 if Year%4 != 0 else 366
-
+    JD     = Julian(Year,1,1,12,Zone)
     print ('Date ' + '\t' + 'EoT '+ '\t' + 'Long Corr EoT '+ '\t' + 'RA '+ '\t' + 'Decl ' +  '\t' + 'Alt '+  '\t' + 'Az '  + '\r' )
+    Days_in_Year = 366 if Year % 4 == 0 else 365
+    for i in range(Days_in_Year):
+        EoT_min,EoT_Corr_min,Right_Ascension_hrs,Declination_deg,Altitude_deg,Azimuth_deg,XXX,YYY = Sun_JD(JD)
+        print (Get_Calendar_Date(JD,Zone)[6] + '\t ' + str(round(EoT_min,rounder))+ '\t' + str(round(EoT_Corr_min,rounder))+ '\t ' + str(round(Right_Ascension_hrs,rounder))+ '\t ' + str(round(Declination_deg,rounder))+ '\t ' + str(round(Altitude_deg,rounder))+ '\t ' + str(round(Azimuth_deg,rounder))  + '\r' )
+        JD += 1
 
-    for i in range(Days_in_Year): 
-        JD                  = JD_1_Jan + i
-        UTC_hrs             = Hour - Zone
-        D0                  = JD - 2451545.
-        T                   = D0/36525
-        GMST_hrs            = (6.697374834 + 0.0657098242761  * D0 + 1.00273790935 * UTC_hrs + 0.000026 * T**2) % 24
-        Mean_Longitude_hrs  = GMST_hrs + 12. - UTC_hrs
-        Mean_Longitude_deg  = Mean_Longitude_hrs * 15
-
-        Perihelion_deg      = 282.938     + 1.7     * T
-        Eccentricity        = 0.016708617 - 0.00004 * T 
-        Obliquity_deg       = 23.43929111 - 0.013   * T
-        Obliquity_rad       = radians(Obliquity_deg)
-
-        Mean_Anomaly_deg    = Mean_Longitude_deg - Perihelion_deg
-        Mean_Anomaly_rad    = radians(Mean_Anomaly_deg)
-        E0 = Mean_Anomaly_rad
-        E1 = E0 + (Mean_Anomaly_rad + Eccentricity*sin(E0)- E0)/(1 - Eccentricity*cos(E0))
-        E2 = E1 + (Mean_Anomaly_rad + Eccentricity*sin(E1)- E1)/(1 - Eccentricity*cos(E1))
-        Eccentric_Anomaly   = E2
-        True_Anomaly_rad    = atan2(sqrt(1 - Eccentricity**2) * sin(Eccentric_Anomaly), (cos(Eccentric_Anomaly)- Eccentricity))
-        True_Anomaly_deg    = degrees(True_Anomaly_rad)
-
-        True_Long_deg       = True_Anomaly_deg + Perihelion_deg
-        True_Long_rad       = radians(True_Long_deg)
-
-        Right_Ascension_rad = atan2(cos(Obliquity_rad) * sin(True_Long_rad),cos(True_Long_rad)) % (2*pi)
-        Right_Ascension_deg = (degrees(Right_Ascension_rad)) % 360.
-        Right_Ascension_hrs = Right_Ascension_deg / 15.
-        Declination_rad     = asin(sin(Obliquity_rad) * sin(True_Long_rad))
-        Declination_deg     = degrees(Declination_rad)
-
-        EoT_deg             = Right_Ascension_deg - Mean_Longitude_deg
-        if EoT_deg >  180.: EoT_deg = EoT_deg-360.
-        if EoT_deg < -180.: EoT_deg = EoT_deg+360.
-        EoT_min             = 4 * EoT_deg
-        Long_Corr           = 4 * (Zone * 15 - Longitude)
-        EoT_Corr_min        = EoT_min + Long_Corr
-        Hour_Angle_hrs      = GMST_hrs + Longitude/15. - Right_Ascension_hrs
-        Hour_Angle_rad      = radians(Hour_Angle_hrs * 15.)
-        Latitude_rad        = radians(Latitude)
-        Altitude_rad        = asin((sin(Latitude_rad) * sin(Declination_rad) + cos(Latitude_rad) * cos(Declination_rad) * cos(Hour_Angle_rad)))
-        Altitude_deg        = degrees(Altitude_rad)
-        a                   =-cos(Declination_rad) * cos(Latitude_rad) * sin(Hour_Angle_rad)
-        b                   = sin(Declination_rad) - sin(Latitude_rad) * sin(Altitude_rad)
-        Azimuth_rad         = atan2(a,b)
-        Azimuth_deg         = degrees(Azimuth_rad)%360
-
-        print (Get_Calendar_Date(JD) + '\t ' + str(round(EoT_min,rounder))+ '\t' + str(round(EoT_Corr_min,rounder))+ '\t ' + str(round(Right_Ascension_hrs,rounder))+ '\t ' + str(round(Declination_deg,rounder))+ '\t ' + str(round(Altitude_deg,rounder))+ '\t ' + str(round(Azimuth_deg,rounder))  + '\r' )
-
-# Short Fourier Routines for EoT & Declination
-
-def EoT_Fourier(Year, Month, Day, Longitude, Zone):
-    if Month <= 2: Month,Year = Month + 12,Year - 1
-    A = int(Year / 100)
-    B = 2 - A + int(A / 4)
-    Days_from_2000 = int(365.25 * (Year + 4716)) + int(30.6001 * (Month + 1)) + Day + B  - 2453069.
+def EoT_Decl_JD_Fourier(JD):
+    Days_from_2000 = JD - 2451545.0
     Index = (4 * Days_from_2000) % 1461
     Theta = 0.004301 * Index # = 2 pi /1461
+    # Equation of Time
     EoT1 = 7.3529 * sin(1 * Theta + 6.2085)
     EoT2 = 9.9269 * sin(2 * Theta + 0.3704)
     EoT3 = 0.3337 * sin(3 * Theta + 0.3042)
@@ -401,9 +378,15 @@ def EoT_Fourier(Year, Month, Day, Longitude, Zone):
     EoT  = EoT1 + EoT2 + EoT3 + EoT4
     Long_Corr = 4 * (Zone * 15 - Longitude)
     EoT_Corr = EoT + Long_Corr
-    if Detail_Print:
-        print ('A              = ',A)
-        print ('B              = ',B)
+    # Declination
+    Aver           = 0.3747
+    Decl1          = 23.2802 * sin(1 * Theta + 4.8995)
+    Decl2          = 0.422 * sin(2 * Theta + 4.8324)
+    Decl3          = 0.2034 * sin(3 * Theta + 4.8995)
+    Decl4          = 0.0415 * sin(4 * Theta + 4.8465)
+    Decl_deg       = Aver + Decl1 + Decl2 + Decl3 + Decl4
+
+    if Detail_Print : 
         print ('Days_from_2000 = ',round(Days_from_2000,rounder))
         print ('Index          = ',round(Index,rounder))
         print ('Theta          = ',round(Theta,rounder))
@@ -417,99 +400,124 @@ def EoT_Fourier(Year, Month, Day, Longitude, Zone):
         print ('               = ',EoT_Dec_MMSS(Long_Corr))
         print ('EoT_Corr       = ',round(EoT_Corr,rounder))
         print ('               = ',EoT_Dec_MMSS(EoT_Corr))
-        print ()
-    return EoT,EoT_Corr
-
-def EoT_JD_Fourier(JD,Longitude,Zone):
-    Days_from_2000 = JD - 2451545.0
-    Index          = (4 * Days_from_2000) % 1461
-    Theta          = 0.004301 * Index # = 2 pi /1461
-    EoT1           = 7.3529 * sin(1 * Theta + 6.2085)
-    EoT2           = 9.9269 * sin(2 * Theta + 0.3704)
-    EoT3           = 0.3337 * sin(3 * Theta + 0.3042)
-    EoT4           = 0.2317 * sin(4 * Theta + 0.7158)
-    EoT_min        = EoT1 + EoT2 + EoT3 + EoT4
-    Long_Corr      = 4 * (Zone * 15 - Longitude)
-    EoT_Corr_min   = EoT_min + Long_Corr
-    return EoT_min,EoT_Corr_min
-
-def Decl_Fourier(Year, Month, Day, Hour):
-    if Month <= 2: Month,Year = Month + 12,Year - 1
-    A = int(Year / 100)
-    B = 2 - A + int(A / 4)
-    Days_from_2000 = int(365.25 * (Year + 4716)) + int(30.6001 * (Month + 1)) + Day + B + Hour / 24 - 2453069.5
-    Index = (4 * Days_from_2000) % 1461
-    Theta = 0.004301 * Index
-    Aver = 0.3747
-    Decl1 = 23.2802 * sin(1 * Theta + 4.8995)
-    Decl2 = 0.422 * sin(2 * Theta + 4.8324)
-    Decl3 = 0.2034 * sin(3 * Theta + 4.8995)
-    Decl4 = 0.0415 * sin(4 * Theta + 4.8465)
-    Decl  = Aver + Decl1 + Decl2 + Decl3 + Decl4
-    if Detail_Print:
-        print ('A              = ',A)
-        print ('B              = ',B)
-        print ('Days_from_2000 = ',round(Days_from_2000,rounder))
-        print ('Index          = ',round(Index,rounder))
-        print ('Theta          = ',round(Theta,rounder))
         print ('Aver           = ',round(Aver,rounder))
         print ('Decl1          = ',round(Decl1,rounder))
         print ('Decl2          = ',round(Decl2,rounder))
         print ('Decl3          = ',round(Decl3,rounder))
         print ('Decl4          = ',round(Decl4,rounder))
-        print ('Decl           = ',round(Decl ,rounder))
-        print ('               = ',Dec_Deg_DMS(Decl))
+        print ('Decl           = ',round(Decl_deg ,rounder))
+        print ('               = ',Dec_Deg_DMS(Decl_deg))
         print ()
-    return Decl
+        
+    return EoT,EoT_Corr,Decl_deg
 
-def Decl_JD_Fourier(JD,Longitude,Zone):    
-    Days_from_2000 = JD - 2451545.0
-    Index          = (4 * Days_from_2000) % 1461
-    Theta          = 0.004301 * Index # = 2 pi /1461
-    Aver           = 0.3747
-    Decl1          = 23.2802 * sin(1 * Theta + 4.8995)
-    Decl2          = 0.422 * sin(2 * Theta + 4.8324)
-    Decl3          = 0.2034 * sin(3 * Theta + 4.8995)
-    Decl4          = 0.0415 * sin(4 * Theta + 4.8465)
-    Decl_deg       = Aver + Decl1 + Decl2 + Decl3 + Decl4
-    return Decl_deg
+def EoT_Decl_Fourier(Year,Month,Day,Hour,Longitude,Zone):
+    JD = Julian(Year,Month,Day,Hour,Zone)
+    return EoT_Decl_JD_Fourier(JD)
 
 def Year_Output_Fourier(Year,Longitude,Zone):
     # ---------------------------------------------------------------
-    # Routine to Calculate... 
-    #      EoT Longitude Corrected EoT & Solar Declination
+    # Routine to Calculate the output of EoT_Decl_JD_Fourier routine
     #      at local noon over a whole year
     #      The output is tab delimited text which can be cut and pasted
     #      directly into a spreadsheet.
     # ---------------------------------------------------------------
+    global Detail_Print
     Detail_Print    = False
-    JD_1_Jan        = Get_Julian_Day(Year,1,1,Hour)
-    Days_in_Year    = 365 if Year%4 != 0 else 366
+    JD        = Julian(Year,1,1,Hour,Zone)
+    Days_in_Year    = 366 if Year % 4 == 0 else 365
     print ('Date ' + '\t' + 'EoT '+ '\t' + 'Long Corr EoT '+ '\t' + 'Declination ' + '\r' )
-    for i in range(Days_in_Year): 
-        JD           = JD_1_Jan + i
-        Result       = EoT_JD_Fourier(JD, Longitude,Zone)
-        EoT_min      = Result[0]
-        EoT_Corr_min = Result[1]
-        Decl_deg     = Decl_JD_Fourier(JD,Longitude,Zone)
-        print (Get_Calendar_Date(JD) + '\t ' + str(round(EoT_min,rounder))+ '\t' + str(round(EoT_Corr_min,rounder))+ '\t ' + str(round(Decl_deg,rounder))  + '\r' )
-
-# Analemma
+    for i in range(Days_in_Year):
+        EoT_min,EoT_Corr_min,Declination_deg = EoT_Decl_JD_Fourier(JD)
+        print (Get_Calendar_Date(JD,Zone)[6] + '\t ' + str(round(EoT_min,rounder))+ '\t' + str(round(EoT_Corr_min,rounder))+ '\t ' + str(round(Declination_deg,rounder)))
+        JD += 1
 
 def Calculate_Analemma():
-    File = open(Filename,'w')
+    
+    if Which_Analemma == 0:
+        Analemma_Filename      = 'Analemma whole year.txt' #this should write output file to same folder as this progran
+    elif Which_Analemma == 1:
+        Analemma_Filename      = 'Analemma days increasing.txt' #this should write output file to same folder as this progran
+    else:
+        Analemma_Filename      = 'Analemma days decreasing.txt' #this should write output file to same folder as this progran
+
+    Detail_Print = False
+    File = open(Analemma_Filename,'w')
     Print_Super_Header(File)
-    Analemmas         (File)
-    Declination_Lines (File)
+    Find_Solstices_and_Equinoxs(Year)
     File.close()
+    print ("Please find output in file '" + Analemma_Filename+"',") 
+    print ("which should be in the same folder as this program.")
+    print ("The file may be opened in any spreadsheet.")
+
+def Find_Solstices_and_Equinoxs(Year):
+    # ----------------------------------------------------------
+    # Finds the Julian Days for the Equinoxs & Solstices
+    # for the specified Year, by looping through the dates that surround
+    # surround that event
+    # It calls routine 'Julian' & 'EoT_Decl_JD_Fourier(JD)'
+    # The output is an array of the four Julian Days
+    # ---------------------------------------------------------- 
+    global Dates
+    Dates = []
+    # Find Winter Solstice for previous Year
+    JD    = Julian(Year-1,12,18,12,Zone)
+    Last  = -20
+    for i in range(10):
+        Decl = EoT_Decl_JD_Fourier(JD)[2]
+        if Decl > Last :
+            Dates.append(int(JD))
+            break
+        Last=Decl
+        JD+=1
+    # Find Spring Equinox for Year
+    JD = Julian(Year,3,16,12,Zone)
+    Last = -10
+    for i in range(10):
+        Decl = EoT_Decl_JD_Fourier(JD)[2]
+        if Decl > 0:
+            Dates.append(int(JD))
+            break
+        Last=Decl
+        JD+=1
+    # Find Summer Solstrice for Year
+    JD = Julian(Year,6,16,12,Zone)
+    Last=20
+    for i in range(10):
+        Decl = EoT_Decl_JD_Fourier(JD)[2]
+        if Decl < Last :
+            Dates.append(int(JD))
+            break
+        Last=Decl
+        JD+=1
+    # Find Autumnal Equinox for Year
+    JD = Julian(Year,9,16,12,Zone)
+    Last = 10
+    for i in range(10):
+        Decl = EoT_Decl_JD_Fourier(JD)[2]
+        if Decl < 0:
+            Dates.append(int(JD))
+            break
+        Last=Decl
+        JD+=1
+    JD = Julian(Year,12,18,12,Zone)
+    Last=-20
+    for i in range(10):
+        Decl = EoT_Decl_JD_Fourier(JD)[2]
+        if Decl > Last :
+            Dates.append(int(JD))
+            break
+        Last=Decl
+        JD+=1
+    return Dates
 
 def Analemmas(File):
     # ----------------------------------------------------------
     # Draw the Analemmas
     # Loop over the Hours requested in the day, then each day in the year 
-    # It calls routine 'Shadow' (& various output formatting rountines)
+    # It calls routine 'Shadow' (& various output print formatting rountines)
     # ---------------------------------------------------------- 
-    
+    global Dates
     Print_Analemma_Header(Hour_Start,File)  
 
     Start_Minute = Hour_Start * 60
@@ -518,28 +526,27 @@ def Analemmas(File):
         Hour           = Minute / 60.
         Minute_in_Hour = Minute % 60
         Time_Text = str(int(Hour)) + ':' + ('0' if Minute_in_Hour < 10 else '')+ str(Minute_in_Hour) + ' hh:mm'
-        Print_Analemma_Sub_Header(Time_Text,File)
-        
-        for Day in range(1,Days_in_Year+1) :
-            if Day > Summer_Solstice and Day < Winter_Solstice :
-                aaa = True
-            else:
-                aaa = False
-            if Day < Summer_Solstice or  Day > Winter_Solstice:
-                bbb = True
-            else:
-                bbb = False
-            # This skips out of the loop, if just half the analemma is requested
-            if (Which_Analemma == 1 and aaa) or (Which_Analemma == 2 and bbb): 
-                 continue
-            xx = Get_Date_from_Day_in_Year(Year,Day)
-            Day_of_Month = xx[0]
-            Month        = xx[1]
-            My_Date_Text = xx[2]
+        Hr = str(int(Hour))
+        Min = str(Minute_in_Hour)
+        Print_Analemma_Sub_Header(Hr,Min,File)
+ 
+        if Which_Analemma == 0:
+            Start = Dates[0]
+            End   = Dates[4]
+        elif Which_Analemma == 1:
+            Start = Dates[0]
+            End   = Dates[2]
+        else:
+            Start = Dates[2]
+            End   = Dates[4]
+        for JD in range(Start,End) :
+            Inc_Dec = "I" if JD >= Dates[0] and JD < Dates[2] else "D"
+            Answer = Get_Calendar_Date(JD,Zone)
             # Find the Shadow Point
-            q = Shadow(Year,Month,Day_of_Month,int(Hour),Minute_in_Hour,Longitude,Latitude,Zone,0,File)
+            q = Shadow(Inc_Dec,Answer[0],Answer[1],Answer[2],int(Hour),Minute_in_Hour,Longitude,Latitude,Zone,File)
  
 def Declination_Lines(File):
+    global Dates
     # ----------------------------------------------------------
     # Draw the Declination Lines
     # First: Loop over the Days in a Year day, looking for the days on which
@@ -552,34 +559,34 @@ def Declination_Lines(File):
     if not (Want_Declination_Lines or Hour_Start != Hour_End) :
         return
     
+    if Which_Analemma == 0:
+        Start = Dates[0]
+        End   = Dates[4]
+    elif Which_Analemma == 1:
+        Start = Dates[0]
+        End   = Dates[2]
+    else:
+        Start = Dates[2]
+        End   = Dates[4]
+
     Print_Declination_Line_Header(File)
-    for Day in range(1,Days_in_Year+1):
-        xx = Get_Date_from_Day_in_Year(Year,Day)
-        Day_in_Month = xx[0]
-        Month        = xx[1]
-        Date_Text    = xx[2]
-        # Only Calculate the Declination Lines on Solstices, Equinoxs, Special Days & selected days of month
-        if (Day in Solstices) or (Day in Equinoxs) or (Day in Special_Days) or (Day_in_Month in Declination_Days) :
-            # This skips out of the loop, if just half the analemma is requested
-            Winter_to_Summer = Day < Summer_Solstice or  Day > Winter_Solstice
-            Summer_to_Winter = Day > Summer_Solstice and Day < Winter_Solstice
-            if (Which_Analemma == 1 and Summer_to_Winter) or (Which_Analemma == 2 and Winter_to_Summer): 
-                continue
-    
-            Last_Date_Text     = ''
+    Last_Date = "xx-xxx"
+    for JD in range(Start,End) :
+        Year,Month,Day,Hour,Minute,Second,Date_Text = Get_Calendar_Date(JD,Zone)
+        if Day in Declination_Days or Date_Text in Special_Days:
             Minute_Start       = Hour_Start * 60
             Minute_End         = Hour_End   * 60
-            for Minute in range (Minute_Start,Minute_End,Declination_Increment):
-                Hour           = int(Minute / 60)
+            for Minute in range (Minute_Start,Minute_End+1,Declination_Increment):
+                Hour_in_Day    = int(Minute / 60)
                 Minute_in_Hour = Minute % 60
-                if Date_Text  != Last_Date_Text: 
+                if Date_Text != Last_Date: 
                     Print_Declination_Lines_Sub_Header(Date_Text,File)
-                Last_Date_Text = Date_Text
+                Last_Date = Date_Text
                 # Find the Shadow Point
-                q = Shadow(Year,Month,Day_in_Month,Hour,Minute_in_Hour,Longitude,Latitude,Zone,0,File)
+                Inc_Dec = "-"
+                q = Shadow(Inc_Dec,Year,Month,Day,Hour_in_Day,Minute_in_Hour,Longitude,Latitude,Zone,File)
 
-Shadow
-def Shadow(The_Year,The_Month,The_Day,The_Hour,The_Minute,The_Longitude,The_Latitude,The_Time_Zone,The_DST,File):
+def Shadow(Inc_Dec,The_Year,The_Month,The_Day,The_Hour,The_Minute,The_Longitude,The_Latitude,The_Time_Zone,File):
     # ---------------------------------------------------------------
     # This is the Gnonomic Heart of the program
     # from Robert Sagot and Denis Savoie of Commission des Cadrans Solaires
@@ -587,9 +594,12 @@ def Shadow(The_Year,The_Month,The_Day,The_Hour,The_Minute,The_Longitude,The_Lati
     # It calls routine Sun to provide EoT & Decl
     # ---------------------------------------------------------------
     My_Decimal_Hour    = The_Hour + The_Minute/60.
-    EoT_min,EoT_Corr_min,Decl_deg  = Sun(The_Year,The_Month,The_Day,The_Hour,The_Longitude,The_Latitude,The_Time_Zone,0)
+    Answer  = Sun(The_Year,The_Month,The_Day,The_Hour,The_Longitude,The_Latitude,The_Time_Zone)
+    EoT_min,EoT_Corr_min,Decl_deg = Answer[0],Answer[1],Answer[3]
     # Noon EoT & Decl used to estimate time of sunrise/set
-    EoT_min,EoT_Corr_min_Noon,Decl_deg_Noon = Sun(The_Year,The_Month,The_Day,12,The_Longitude,The_Latitude,The_Time_Zone,0)        
+    Answer = Sun(The_Year,The_Month,The_Day,12,The_Longitude,The_Latitude,The_Time_Zone)
+    EoT_min,EoT_Corr_min_Noon,Decl_deg_Noon = Answer[0],Answer[1],Answer[3]       
+    
     # Traditional Solar Time Sundial requested
     if Mean_or_Solar  == False : 
         EoT_Corr_min       = 4 * (Zone * 15 - Longitude)
@@ -637,109 +647,185 @@ def Shadow(The_Year,The_Month,The_Day,The_Hour,The_Minute,The_Longitude,The_Lati
             # ----------------------------------------------------------
             xx = x + Nodus_x
             yy = y + Nodus_y
-            On_Plate = ' ' if ((xx >= -WIDTH/2 and xx <= WIDTH/2) and (yy >= -HEIGHT/2 and yy <= HEIGHT/2)) else 'Off Plate'
+            On_Plate = ' ' if ((xx >= -Dial_Plate_Width/2 and xx <= Dial_Plate_Width/2) and (yy >= -Dial_Plate_Height/2 and yy <= Dial_Plate_Height/2)) else 'Off Plate'
             
             # Write the output to file
-            File.write(str(The_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t' + str(round(xx,3)) +'\t'+ str(round(yy,3))+'\t'+ On_Plate +'\r')
+            File.write(Inc_Dec + '\t' + str(The_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t' + str(round(xx,3)) +'\t'+ str(round(yy,3))+'\t'+ On_Plate +'\r')
             return
         else:
-            File.write(str(The_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t\t\t' + 'Behind'+'\r')
+            # Sun is Behind the Plate
+            File.write("-" + '\t' + str(The_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t\t\t' + 'Behind'+'\r')
             return 
     else:
-        File.write(str(My_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t\t\t' + 'Night'+'\r')
+        # Sun is below Horizons
+        File.write("-" + '\t' + str(The_Year) +'\t' + str(The_Month) + '\t' + str(The_Day) + '\t' + str(The_Hour) + '\t' + str(The_Minute) + '\t\t\t' + 'Night'+'\r')
         return
 
-def Print_Super_Header(File) :
-    File.write ('Zenithal_Distance    = ' + str(Zenithal_Dist)        + ' degrees'+'\r')
-    File.write ('Gnomonic_Declination = ' + str(Gnomonic_Decl)        + ' degrees'+'\r')
-    File.write ('Dial_Plate_Width     = ' + str(Dial_Plate_Width )    +'\r')
-    File.write ('Dial_Plate_Height    = ' + str(Dial_Plate_Height)    +'\r')
-    File.write ('Nodus_Height         = ' + str(Nodus_Height     )    +'\r')
-    File.write ('Nodus_x              = ' + str(round(Nodus_x,2))     + ' from plate centre (+ve to right)'+'\r')
-    File.write ('Nodus_y              = ' + str(round(Nodus_y,2))     + ' from plate centre (+ve up)'      +'\r')
-    File.write ('Latitude             = ' + str(Latitude)             + ' degrees +ve N'                       +'\r')
-    File.write ('Longitude            = ' + str(Longitude)            + ' degrees +ve E of Greenwich'          +'\r')
-    File.write ('Time Zone            = ' + str(Zone)                 + ' hours +ve E of Greenwich'            +'\r')
-    File.write ('Polar Style x,y      = ' + str(round(X0,2)) + ',' + str(round(Y0,2))                          +'\r')                        
-        
-    if Which_Analemma == 0:
-        File.write ('Results for Full Analemma\r')
-    elif Which_Analemma == 1:
-        File.write ('Results for Daylight Increasing Days\r')
-    else:
-        File.write ('Results for Daylight Decreasing Days\r')
-    File.write ('\r')
-    File.write ('Warnings may be...\r')
-    File.write ('   Off Plate = nodus shadow is not on the dial plate\r')
-    File.write ('   Behind    = calculated nodus shadow behing the dial plate\r')
-    File.write ('   Below     = night time - sun below horizon\r')
-    File.write ('\r')
+def Calculate_Table(Year):
+    # Build an empty Matrix to store the results
+    Matrix_W = 24 # 2 columns per month
+    Matrix_H = 60
+    Matrix = [['' for x in range(Matrix_W)] for y in range(Matrix_H)] 
+    Month_Names = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
-def Print_Analemma_Header(The_Hour,File):
-    File.write ('+++++++++++++++++++++++++++++++++++++++++++++++\r')
-    File.write ('A N A L E M M A   L I N E S\r')
-    File.write ('+++++++++++++++++++++++++++++++++++++++++++++++\r')
-    File.write ('Year'+'\t'+'Month'+'\t'+'Day'+'\t'+'Hour'+'\t'+'Minute'+'\t'+'X-Coords' +'\t'+'Y-Coords' +'\t' + 'Warnings\r')
+    Months,Days,EoTs             =[],[],[]
+    Last = 99
+    Total_Days = 366 if Year % 4 == 0 else 365
+    if Table_Type and Year % 4 != 0:
+        print ("Stopped, for Table Table, Specified Year must be Leap...")
+    JD = Julian(Year, 1, 1, 12, Zone)
+    for i in range (Total_Days):
+        Ans = Get_Calendar_Date(JD,Zone)
+        Year,Month,Day = Ans[0],Ans[1],Ans[2]
+        # Find the Average Longitude Corrected EoT during daylight hours
+        Ans = Sun(Year,Month,Day,12,Longitude,Latitude,Zone)
+        EoT_Noon  = Ans[1]
+        Dawn,Dusk = Ans[6],Ans[7] # these are approx
+        EoT_Dawn = Sun(Year,Month,Day,Dawn,Longitude,Latitude,Zone)[1]
+        EoT_Dusk = Sun(Year,Month,Day,Dusk,Longitude,Latitude,Zone)[1]
+        EoT_Day = (EoT_Dawn + EoT_Dusk)/2
+        if Table_Type:
+            if Month != 2 or Day != 29:
+                Ans = Sun(Year+1,Month,Day,Hour,Longitude,Latitude,Zone)
+                Dawn,Dusk = Ans[6],Ans[7] # these are approx
+                JD_dawn,JD_dusk = JD - Dawn/24.,JD + Dusk/24.
+                EoT_Daw1,EoT_Dusk = Sun_JD(JD_dawn)[1],Sun_JD(JD_dusk)[1]
+                EoT_Av = (EoT_Dawn + EoT_Dusk)/2
+                EoT_Day_1 = (EoT_Dawn + EoT_Dusk)/2
+                
+                Ans = Sun(Year+2,Month,Day,Hour,Longitude,Latitude,Zone)
+                Dawn,Dusk = Ans[6],Ans[7] # these are approx
+                JD_dawn,JD_dusk = JD - Dawn/24.,JD + Dusk/24.
+                EoT_Dawn,EoT_Dusk = Sun_JD(JD_dawn)[1],Sun_JD(JD_dusk)[1]
+                EoT_Day_2 = (EoT_Dawn + EoT_Dusk)/2
+                
+                Ans = Sun(Year+3,Month,Day,Hour,Longitude,Latitude,Zone)
+                Dawn,Dusk = Ans[6],Ans[7] # these are approx
+                JD_dawn,JD_dusk = JD - Dawn/24.,JD + Dusk/24.
+                EoT_Dawn,EoT_Dusk = Sun_JD(JD_dawn)[1],Sun_JD(JD_dusk)[1]
+                EoT_Day_3 = (EoT_Dawn + EoT_Dusk)/2
+                EoT_Day = (EoT_Day + EoT_Day_1 + EoT_Day_2  +EoT_Day_3)/4.
+        if Table_Fineness == 0:
+            EoT_Day = int(round(EoT_Day,0))
+        else:
+            EoT_Day = round(2*EoT_Day,0)/2.
 
-def Print_Analemma_Sub_Header(Time_Text,File):
-    File.write ('===============================================\r')
-    File.write ('Analemma for ' + Time_Text +'\r')
-    File.write ('===============================================\r')
+        # Build the Values for an Equation Table
+        if Day == 1 or EoT_Day != Last:
+            Months.append(Month)
+            Days  .append(Day)
+            EoTs  .append(EoT_Day)
+            Last = EoT_Day
+        JD +=1
+ 
+    # Build a 24 column matrix (2 cols per month) to store the results  
+    The_Month  = 0
+    Last_Month = 0
+    Row        = -1
+    Max_Row    = 1
+    This_Day   = -1
+    for i in range(len(EoTs)):
+        This_Month   = Months[i]
+        This_Day     = Days[i]
+        This_EoT     = EoTs[i]
+        if This_Day == 1:
+            Row      = 0
+            Kol_Day  = (This_Month-1) * 2 
+            Kol_Val  = Kol_Day + 1
+        if This_Day == 1:
+            Matrix[Row][Kol_Day] = This_Day
+            Matrix[Row][Kol_Val] = This_EoT
+        else:
+            if This_EoT != Last_EoT:
+                Matrix[Row][Kol_Day] = This_Day
+                Matrix[Row][Kol_Val] = This_EoT
+        Max_Row  = max(Max_Row,Row)
+        Row     += 1
+        Last_EoT = This_EoT
+        Max_Row  = max(Max_Row,Row)
+    
+    # Write Output File
+    Table_Filename             = 'Table.txt'
+    File                       = open(Table_Filename,'w')
+    Year_String                = " for Year " + str(Year)
+    if Table_Type: Year_String = " for Years "  + str(Year) + " - " + str(Year+3)
+    File.write("Equation-of-Time Table - Longitude Corrrected " + Year_String  + '\r')
+    File.write("Place"     + '\t' + Place          + '\r')
+    File.write("Longitude" + '\t' + str(Longitude) + '\r')
+    File.write("Zone"      + '\t' + str(Zone)      + '\r')
+    File.write('\r')
+    File.write("To read this Table, find the date that is less than or equal to today's date," + '\r') 
+    File.write("then read the corresponding value of the Longitude Corrected Equation of Time in minutes" + '\r')
+    File.write('\r')
+    
+    # Write Column Headings
+    String1 = ''
+    String2 = ''
+    for i in range(12):
+        String1 = String1 + str(Month_Names[i]) + '\t\t'
+        String2 = String2 + "Day" + '\t'+ "EoT" + '\t'
+    String1 = String1[:len(String1) - 1] # delete last tab mark
+    String2 = String2[:len(String2) - 1] # delete last tab mark
+    File.write(String1 +'\r')
+    File.write(String2 +'\r')
+    
+    # Write Table Data
+    for i in range(Max_Row):
+        String = ''
+        for j in range(24):
+            String += str(Matrix[i][j]) + '\t'
+        String = String[:len(String) - 1] # delete last tab mark
+        File.write(String +'\r')
+    File.close()
+    print ("Please find output in file 'Table.txt',") 
+    print ("which should be in the same folder as this program.")
+    print ("The file may be opened in any spreadsheet.")
 
-def Print_Declination_Line_Header(File):
-    if not(Want_Declination_Lines or Hour_Start != Hour_End): 
-        File.write ('\r')
-        File.write ('===============================================\r')
-        File.write ('D E C L I N A T I O N   L I N E S'+'\r')
-        File.write ('===============================================\r')
-        File.write ('Year'+'\t'+'Month'+'\t'+'Day'+'\t'+'Hour'+'\t'+'Minute'+'\t'+'\t'+'X-Coords' +'\t'+'Y-Coords' +'\t' + 'Warnings\r')
-
-def Print_Declination_Lines_Sub_Header(My_Date_Text,File) :
-    File.write ('===============================================\r')
-    File.write ('Declination Line for ' + My_Date_Text+'\r')
-    File.write ('===============================================\r')
-
-def Get_Julian_Day(Year, Month, Day, Hour) :
+def Julian(Year,Month,Day,Hour,Zone) :
     #===========================================
     # ROUTINE TO GET JULIAN DAY FROM DATE & TIME
-    #Reference: Astronomical Algorithms 2nd Edition 1998 by Jean Meeus - Page 60-61
-    if Month <= 2 :
-        YYear                    = Year - 1
-        MMonth                    = Month + 12
-    else :
-        YYear                    = Year
-        MMonth                    = Month
-    a                            = int(YYear / 100)
-    if YYear > 1582 :
-        Switcher                = 1
-    else :
-        if YYear < 1582 :
-            Switcher                = 0
-        else :
-            if MMonth > 10 :
-                Switcher            = 1
-            else :
-                if MMonth < 10 :
-                    Switcher        = 0
-                else :
-                    if Day >= 15 :
-                        Switcher    = 1
-                    else :
-                        Switcher    = 0
-    if Switcher == 0 :
-        b                            = 0
-    else :
-        b                            = 2 - a + int(a / 4)
-    c                                = int(365.25 * YYear) ;
-    d                                 = int(30.6001 * (MMonth + 1)) ;
-    return b + c + d + Day + 1720994.5 + Hour/24.
+    # Reference: Astronomical Algorithms 2nd Edition 1998 by Jean Meeus - Page 60-61
+    
+    UTC_hrs             = Hour - Zone
+    if UTC_hrs<0:  Day -=1
+    if UTC_hrs>24: Day +=1
+    UTC_hrs             = UTC_hrs % 24
+    if Month   <= 2: Month,Year = Month + 12,Year - 1
+    a           = int(Year / 100)
+    b           = 2 - a + int(a / 4)
+    c           = int(365.25 * Year) ;
+    d           = int(30.6001 * (Month + 1)) ;
+    Julian_Day  = b + c + d + Day + 1720994.5 + (Hour-Zone)/24.
 
-def Get_Calendar_Date(The_JD) :
+    if Detail_Print:
+        print ('---------------------')
+        print ('Input')
+        print ('---------------------')
+        print ('Place                = ',Place)
+        print ('Longitude            = ',Longitude)
+        print ('Latitude             = ',Latitude)
+        print ('Zone                 = ',Zone)
+        print ('Year                 = ',Year)
+        print ('Month                = ',Month)
+        print ('Day                  = ',Day)
+        print ('Civil Time           = ',Hour)
+        print ('---------------------')
+        print ('Julian Day Calculations')
+        print ('---------------------')
+        print ('UTC_hrs              = ',UTC_hrs)
+        print ('a                    = ',a)
+        print ('b                    = ',b)
+        print ('c                    = ',c)
+        print ('c                    = ',d)
+        print ('Julian Day           = ',Julian_Day)
+    return Julian_Day
+
+def Get_Calendar_Date(The_JD,Zone) :
     #======================================================
     # ROUTINE TO GET CALENDAR DATE AND TIME FROM JULIAN DAY
-    #Reference: Practical Astronomy with your Calculator 3rd Edn : Duffet Smith - Page 8
+    # Reference: Practical Astronomy with your Calculator 3rd Edn : Duffet Smith - Page 8
     Month_List = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    JDD                = The_JD + .5
+    JDD                = The_JD + .5 
     III                = int(JDD)
     FFF                = JDD - III
     if III > 2299160 :
@@ -753,11 +839,17 @@ def Get_Calendar_Date(The_JD) :
     GG                 = int((CC - EE) / 30.6001)
     Day_inc_Frac       = CC - EE + FFF - int(30.6001 * GG)
     Dayo               = int(Day_inc_Frac)
-    Hour               = 24 * (Day_inc_Frac - Dayo)
+    Hour               = 24 * (Day_inc_Frac - Dayo) + Zone
     Houro              = int(Hour)
     Minute             = 60. * (Hour - Houro)
     Minuteo            = int(Minute)
-    Second             = 60. * (Minute-Minuteo)                   
+    Second             = 60. * (Minute-Minuteo)
+    if round(Second,3) == 60.:
+        Second = 0
+        Minuteo += 1
+    if Minuteo == 60:
+        Minuteo = 0
+        Houro +=1
     if GG < 13.5 :
         Montho         = GG - 1
     else :
@@ -766,35 +858,12 @@ def Get_Calendar_Date(The_JD) :
         Yearo          = DD - 4716
     else :
         Yearo          = DD - 4715
-    return str(Dayo) + '-' + Month_List[Montho-1] + '-' + str(Yearo)
+    Txt = str(Dayo) + '-' + Month_List[Montho-1]
+    X = The_JD-.5
+    UTC_hrs = ((X-int(X)) * 24) % 24 # Extract UTC_hrs from Julian Day
 
-def Get_Date_from_Day_in_Year(Year,Day):
-    # ---------------------------------------------------------------
-    # Utility to provide the civil date from Day Number 
-    # Input 'Day' is day in year starting with 1 on 1st Jan
-    # Output is... 
-    #           Day in Month e.g 6th, 13th etc
-    #           Month Index e.g 2 for Frbruary
-    #           Text Date e.g 27-Apr
-    # ---------------------------------------------------------------
-    Leap = True if Year % 4 == 0 else False
-    if not Leap:
-        First_of_Month   = [0,1,32,60,91,121,152,182,213,244,274,305,335]
-        end = 365
-    else:
-        First_of_Month   = [0,1,32,61,92,122,153,183,214,245,275,306,336]
-        end = 366
-    Month_Names          = [' ','Jan','Feb','Mar','Apr','May','Jun',
-                                'Jul','Aug','Sep','Oct','Nov','Dec']
-    Month_Index          = 0
-    Last_Month_Index     = 0
-    for Day_in_Year in range(1,end+1):
-        if (Day_in_Year in First_of_Month):
-            Month_Index += 1
-            Last_Month_Index = Day_in_Year 
-        if Day_in_Year == Day:
-            Day_in_Month = Day_in_Year - Last_Month_Index + 1
-            return Day_in_Month, Month_Index, str(Day_in_Month) + '-' + Month_Names[Month_Index]
+    Txt = str(Year) + '-' + Month_List[Montho-1] + '-' + str(Dayo) + ' ' + str(Houro) + 'hrs'
+    return Yearo,Montho,Dayo,Houro,Minuteo,Second,Txt
 
 def EoT_Dec_MMSS(The_EoT):
     # -----------------------------------------------------
@@ -816,7 +885,7 @@ def Dec_Deg_DMS(The_Degs) :
     M0 = 60. * (D0 - D1)
     M1 = int (M0)
     S0 = 60. * (M0 - M1)
-    return Sign + str(round(D1,2)) + u'° ' +str(round(M1,2)) + u'' ' + str(round(S0,2)) + u'''
+    return Sign + str(round(D1,2)) + u'° ' +str(round(M1,2)) + "' "  + str(round(S0,2))  + "\""
 
 def Dec_Hrs_HMS(The_Hrs) :
     # -----------------------------------------------------
@@ -830,6 +899,58 @@ def Dec_Hrs_HMS(The_Hrs) :
     S0 = 60. * (M0 - M1)
     return Sign + '%.02d' % D1 + u':' +'%.02d' % M1 + u':' + '%2.1f' % S0 + u' hh:mm:ss'
 
+def Print_Super_Header(File) :
+    File.write ('Zenithal_Distance    = ' + "\t" + str(Zenithal_Dist)         + '\t' + ' degrees'+'\r')
+    File.write ('Gnomonic_Declination = ' + "\t" + str(Gnomonic_Decl)         + '\t' + ' degrees'+'\r')
+    File.write ('Dial_Plate_Width     = ' + "\t" + str(Dial_Plate_Width )     +'\r')
+    File.write ('Dial_Plate_Height    = ' + "\t" +  str(Dial_Plate_Height)    +'\r')
+    File.write ('Nodus_Height         = ' + "\t" +  str(Nodus_Height     )    +'\r')
+    File.write ('Nodus_x              = ' + "\t" +  str(round(Nodus_x,2))     + "\t" + ' from plate centre (+ve to right)'+'\r')
+    File.write ('Nodus_y              = ' + "\t" +  str(round(Nodus_y,2))     + "\t" + ' from plate centre (+ve up)'      +'\r')
+    File.write ('Latitude             = ' + "\t" +  str(Latitude)             + "\t" + ' degrees +ve N'                   +'\r')
+    File.write ('Longitude            = ' + "\t" +  str(Longitude)            + "\t" + ' degrees +ve E of Greenwich'      +'\r')
+    File.write ('Time Zone            = ' + "\t" +  str(Zone)                 + "\t" + ' hours +ve E of Greenwich'        +'\r')
+    File.write ('Polar Style x        = ' + "\t" + str(round(X0,2))                                                              +'\r')                        
+    File.write ('Polar Style y        = ' + "\t" + str(round(Y0,2))                                                              +'\r')                        
+        
+    if Which_Analemma == 0:
+        File.write ('Results for Full Analemma\r')
+    elif Which_Analemma == 1:
+        File.write ('Results for Daylight Increasing Days\r')
+    else:
+        File.write ('Results for Daylight Decreasing Days\r')
+    File.write ('-\t\r')
+    File.write ('Warnings may be...\r')
+    File.write ('   Off Plate = nodus shadow is not on the dial plate\r')
+    File.write ('   Behind    = calculated nodus shadow behing the dial plate\r')
+    File.write ('   Below     = night time - sun below horizon\r')
+    File.write ('-\t\r')
+
+def Print_Analemma_Header(The_Hour,File):
+    File.write ('+++++++++++++++++++++++++++++++++++++++++++++++\r')
+    File.write ('A N A L E M M A   L I N E S\r')
+    File.write ('+++++++++++++++++++++++++++++++++++++++++++++++\r')
+    File.write ('Inc/Dec' + '\t' 'Year'+'\t'+'Month'+'\t'+'Day'+'\t'+'Hour'+'\t'+'Minute'+'\t'+'X-Coords' +'\t'+'Y-Coords' +'\t' + 'Warnings' +'\t\r')
+
+def Print_Analemma_Sub_Header(Hr,Min,File):
+    File.write ('===============================================\r')
+    File.write ('Analemma for ' + Hr + ' hr ' + Min + ' min \r')
+    File.write ('===============================================\r')
+
+def Print_Declination_Line_Header(File):
+    if not(Want_Declination_Lines or Hour_Start != Hour_End): 
+        File.write ('\r')
+        File.write ('===============================================\r')
+        File.write ('D E C L I N A T I O N   L I N E S'+'\r')
+        File.write ('===============================================\r')
+        File.write ('Year'+'\t'+'Month'+'\t'+'Day'+'\t'+'Hour'+'\t'+'Minute'+'\t'+'\t'+'X-Coords' +'\t'+'Y-Coords' +'\t' + 'Warnings\r')
+
+def Print_Declination_Lines_Sub_Header(My_Date_Text,File) :
+    File.write ('===============================================\r')
+    File.write ('Declination Line for ' + My_Date_Text+'\r')
+    File.write ('===============================================\r')
+
+
 Calculate()
 
-print ('Done')
+print ('\rDone')
