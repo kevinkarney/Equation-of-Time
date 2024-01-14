@@ -2,7 +2,7 @@ from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 # -----------------------------------------------------------------------------------
 # EQUATION OF TIME
 # -----------------------------------------------------------------------------------
-# Python Code written by Kevin Karney, Winter 4
+# Python Code written by Kevin Karney, Winter 2024
 # Should work on all releases of Python
 # Free for anyone to use without any guarantees!
 #
