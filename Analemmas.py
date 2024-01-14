@@ -1,4 +1,4 @@
-from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
+from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi 
 # -----------------------------------------------------------------------------------
 # ANALEMMAS
 # -----------------------------------------------------------------------------------
