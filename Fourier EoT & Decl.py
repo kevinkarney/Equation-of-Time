@@ -95,7 +95,7 @@ def EoT_Decl_JD_Fourier(JD):
     Decl2          = 0.422 * sin(2 * Theta + 4.8324)
     Decl3          = 0.2034 * sin(3 * Theta + 4.8995)
     Decl4          = 0.0415 * sin(4 * Theta + 4.8465)
-    Decl_deg       = Aver + Decl1 + Decl2 + Decl3 + Decl4
+    Decl_deg       = Aver + Decl1 + Decl2 + Decl3 + Decl4 
 
     if Detail_Print : 
         print ('Days_from_2000 = ',round(Days_from_2000,rounder))
