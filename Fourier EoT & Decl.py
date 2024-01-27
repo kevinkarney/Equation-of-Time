@@ -86,7 +86,7 @@ def EoT_Decl_JD_Fourier(JD):
     EoT2 = 9.9269 * sin(2 * Theta + 0.3704)
     EoT3 = 0.3337 * sin(3 * Theta + 0.3042)
     EoT4 = 0.2317 * sin(4 * Theta + 0.7158)
-    EoT  = EoT1 + EoT2 + EoT3 + EoT4
+    EoT  = 0.019 + EoT1 + EoT2 + EoT3 + EoT4
     Long_Corr = 4 * (Zone * 15 - Longitude)
     EoT_Corr = EoT + Long_Corr
     # Declination
