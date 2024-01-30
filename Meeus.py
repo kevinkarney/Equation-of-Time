@@ -543,7 +543,6 @@ def Meeus (JD,Topo_Long,Topo_Lat,Height,Zone):
 
     #*************************************************************************
     # Calculate Topocentric Equation of Time
-    print (Zone)
     Topo_EoT_deg   = (GAST_deg - UT1_deg - Topo_RA_deg) % 360. - 180.
     Topo_EoT_min   = Topo_EoT_deg * 4.
     
