@@ -22,7 +22,6 @@ from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 #     Julian(Year,Month,Day,Hour,Zone) which gives the Julian Day
 #     EoT_Dec_MMSS(The_EoT) which formats decimal minutes to mins and second 
 #     Dec_Deg_DMS(The_Degs) which formats decimal degrees to degrees, mins and secs
-#     Dec_Hrs_HMS(The_Hrs) which formats decimal hours to degrees, mins and secs
 
 # Much of the code in routines EoT_Decl_JD_Fourier & Julian
 # relates to printing out all the calculation steps for interest 
