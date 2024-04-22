@@ -180,6 +180,51 @@ def Julian(Year,Month,Day,Hour,Zone) :
         print ('Julian Day     = ',round(Julian_Day,rounder))
     return Julian_Day
 
+def Get_Calendar_Date(The_JD,Zone) :
+    #======================================================
+    # ROUTINE TO GET CALENDAR DATE AND TIME FROM JULIAN DAY
+    # Reference: Practical Astronomy with your Calculator 3rd Edn : Duffet Smith - Page 8
+    Month_List = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    JDD                = The_JD + .5 
+    III                = int(JDD)
+    FFF                = JDD - III
+    if III > 2299160 :
+        AA             = int((III - 1867216.25) / 36524.25)
+        BB             = III + 1 + AA - int(AA / 4)
+    else :
+        BB             = III
+    CC                 = BB + 1524
+    DD                 = int((CC - 122.1) / 365.25)
+    EE                 = int(365.25 * DD)
+    GG                 = int((CC - EE) / 30.6001)
+    Day_inc_Frac       = CC - EE + FFF - int(30.6001 * GG)
+    Dayo               = int(Day_inc_Frac)
+    Hour               = 24 * (Day_inc_Frac - Dayo) + Zone
+    Houro              = int(Hour)
+    Minute             = 60. * (Hour - Houro)
+    Minuteo            = int(Minute)
+    Second             = 60. * (Minute-Minuteo)
+    if round(Second,3) == 60.:
+        Second = 0
+        Minuteo += 1
+    if Minuteo == 60:
+        Minuteo = 0
+        Houro +=1
+    if GG < 13.5 :
+        Montho         = GG - 1
+    else :
+        Montho         = GG - 13
+    if Montho > 2.5 :
+        Yearo          = DD - 4716
+    else :
+        Yearo          = DD - 4715
+    Txt = str(Dayo) + '-' + Month_List[Montho-1]
+    X = The_JD-.5
+    UTC_hrs = ((X-int(X)) * 24) % 24 # Extract UTC_hrs from Julian Day
+
+    Txt = str(Year) + '-' + Month_List[Montho-1] + '-' + str(Dayo) + ' ' + str(Houro) + 'hrs'
+    return Yearo,Montho,Dayo,Houro,Minuteo,Second,Txt
+
 def EoT_Dec_MMSS(The_EoT):
     # -----------------------------------------------------
     # Routine to convert Decimal Minutes to Minutes & Seconds
