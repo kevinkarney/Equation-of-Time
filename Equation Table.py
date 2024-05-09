@@ -48,6 +48,8 @@ def Calculate(Year):
         print ("Stopped, for an Equation Tables, Specified Year must be a Leap Year...")
         return
 
+    # Calculations are done from 1st March on a Leap Year
+    # until the next 29th Feb, 1461 days later
     JD_Start = Julian(Year  , 3,  1, 12, Zone)
     JD_End   = Julian(Year+4, 2, 29, 12, Zone)
 
@@ -55,6 +57,7 @@ def Calculate(Year):
     All_Months = []
     All_EoTs   = []
 
+    # Build arrays with days of months, month name & EoTs
     JD = JD_Start
     for i in range(365):
         All_Days  .append(Get_Calendar_Date(JD,Zone)[2])
@@ -84,18 +87,16 @@ def Calculate(Year):
         else:
             This_EoT      =  All_EoTs[i]   
             Mins          = int(This_EoT)
-            # print (str(Mins))
             Secs          = int(round(60*(This_EoT - Mins),0))
             if Secs == 60:
                 Secs = 0
                 Mins += 1
-            # print (str(Secs))
             xx = "0" if Secs < 10 else ""
             yy = "0" if Mins < 10 else ""
             This_EoT      = " " + yy + str(Mins)+ ":"+ xx + str(Secs)
-            # print (This_EoT)
-        
-         
+
+        # Select the days when the appropriate value changes
+        # or 1st Month
         if This_Day  == 1 or This_EoT != Last_EoT:
             Days  .append(This_Day)
             Months.append(This_Month)
@@ -333,4 +334,5 @@ def Get_Calendar_Date(The_JD,Zone) :
 Calculate(Year)
 
 print ('\rDone')
+
 
