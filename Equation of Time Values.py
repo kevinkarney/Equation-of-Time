@@ -251,7 +251,13 @@ def Sun_Year(Year,Longitude,Zone):
     print ('Date ' + '\t' + 'EoT '+ '\t' + 'Long Corr EoT '+ '\t' + 'RA '+ '\t' + 'Decl ' +  '\t' + 'Alt '+  '\t' + 'Az '  + '\r' )
     Days_in_Year = 366 if Year % 4 == 0 else 365
     for i in range(Days_in_Year):
-        EoT_min,EoT_Corr_min,Right_Ascension_hrs,Declination_deg,Altitude_deg,Azimuth_deg,XXX,YYY = Sun_JD(JD)
+        Answer              = Sun_JD(JD)
+        EoT_min             = Answer[0]
+        EoT_Corr_min        = Answer[1]
+        Right_Ascension_hrs = Answer[2]
+        Declination_deg     = Answer[3]
+        Altitude_deg        = Answer[4]
+        Azimuth_deg         = Answer[5]
         print (Get_Calendar_Date(JD,Zone)[6] + '\t ' + str(round(EoT_min,rounder))+ '\t' + str(round(EoT_Corr_min,rounder))+ '\t ' + str(round(Right_Ascension_hrs,rounder))+ '\t ' + str(round(Declination_deg,rounder))+ '\t ' + str(round(Altitude_deg,rounder))+ '\t ' + str(round(Azimuth_deg,rounder))  + '\r' )
         JD += 1
 
