@@ -2,7 +2,7 @@ from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 # -----------------------------------------------------------------------------------
 # EQUATION OF TIME & DECLINATION BY FOURIER
 # -----------------------------------------------------------------------------------
-# Python Code written by Kevin Karney, Winter 2024
+# Python Code written by Kevin Karney, Spring 2025
 # Should work on all releases of Python
 # Free for anyone to use without any guarantees!
 #
@@ -44,7 +44,7 @@ Longitude      = 23.71667 # Degrees : +ve East of Greenwich
 Latitude       = 37.96667 # Degrees : +ve East of Greenwich
 Zone           = 2        # Hrs     : +ve East of Greenwich
 
-Year           = 2024
+Year           = 2025
 Month          = 2        # not required for Year calculation or analemma
 Day            = 13       # not required for Year calculation or analemma
 Hour           = 12       # not required for Year calculation or analemma
@@ -153,10 +153,8 @@ def Julian(Year,Month,Day,Hour,Zone) :
     if Month   <= 2: Month,Year = Month + 12,Year - 1
     a           = int(Year / 100)
     b           = 2 - a + int(a / 4)
-    c           = int(365.25 * Year) ;
-    d           = int(30.6001 * (Month + 1)) ;
-    Julian_Day  = b + c + d + Day + 1720994.5 + (Hour-Zone)/24.
-
+    Julian_Day  = b + int(365.25 * Year)  + int(30.6001 * (Month + 1))  + Day + (Hour-Zone)/24. + 1720994.5 
+ 
     if Detail_Print:
         print ('---------------------')
         print ('Input')
@@ -175,8 +173,6 @@ def Julian(Year,Month,Day,Hour,Zone) :
         print ('UTC_hrs        = ',UTC_hrs)
         print ('a              = ',a)
         print ('b              = ',b)
-        print ('c              = ',c)
-        print ('d              = ',d)
         print ('Julian Day     = ',round(Julian_Day,rounder))
     return Julian_Day
 
