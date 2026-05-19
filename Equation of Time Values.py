@@ -2,7 +2,7 @@ from math import degrees,radians,tan,sin,acos,cos,floor,atan2,sqrt,asin,pi
 # -----------------------------------------------------------------------------------
 # EQUATION OF TIME
 # -----------------------------------------------------------------------------------
-# Python Code written by Kevin Karney, Winter 2024
+# Python Code written by Kevin Karney, Spring 2025
 # Should work on all releases of Python
 # Free for anyone to use without any guarantees!
 #
@@ -277,7 +277,6 @@ def Julian(Year,Month,Day,Hour,Zone) :
     c           = int(365.25 * Year) ;
     d           = int(30.6001 * (Month + 1)) ;
     Julian_Day  = b + c + d + Day + 1720994.5 + (UTC_hrs)/24.
-
     if Detail_Print:
         print ('---------------------')
         print ('Input')
